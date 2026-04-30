@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Portal do Bairro | Ocorrências da Comunidade</title>
+  <!-- Google Fonts + Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ---------- RESET & BASE (mesmo estilo do index) ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f9fafb;
+      color: #1e293b;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    :root {
+      --verde-principal: #2e7d32;
+      --verde-escuro: #1b5e20;
+      --azul-destaque: #1565c0;
+      --azul-claro: #e3f2fd;
+      --cinza-fundo: #f8fafc;
+      --cinza-borda: #e2e8f0;
+      --texto-escuro: #0f172a;
+      --texto-suave: #475569;
+      --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+      --shadow-hover: 0 12px 20px -8px rgba(0, 0, 0, 0.15);
+      --transition: all 0.3s ease;
+    }
+
+    /* ---------- HEADER COM MENU SANDUÍCHE ---------- */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--cinza-borda);
+      padding: 16px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      transition: var(--transition);
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--verde-principal), var(--azul-destaque));
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      cursor: pointer;
+    }
+
+    /* Menu sanduíche (hamburger) */
+    .menu-hamburger {
+      display: none;
+      font-size: 28px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--verde-principal);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      font-weight: 500;
+      color: var(--texto-escuro);
+      transition: var(--transition);
+    }
+
+    .nav-links a:hover {
+      color: var(--verde-principal);
+    }
+
+    /* Sidebar mobile */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -280px;
+      width: 280px;
+      height: 100%;
+      background: white;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.1);
+      z-index: 1100;
+      transition: left 0.3s ease;
+      padding: 80px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .sidebar.open {
+      left: 0;
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: var(--texto-escuro);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sidebar a i {
+      width: 24px;
+      color: var(--verde-principal);
+    }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      z-index: 1050;
+      display: none;
+    }
+
+    .overlay.active {
+      display: block;
+    }
+
+    .btn-outline-header {
+      background: transparent;
+      border: 1.5px solid var(--verde-principal);
+      padding: 8px 20px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--verde-principal);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-outline-header:hover {
+      background: var(--verde-principal);
+      color: white;
+    }
+
+    /* ---------- CONTEÚDO PRINCIPAL ---------- */
+    main {
+      margin-top: 90px;
+      padding: 0 8% 60px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--verde-principal), var(--azul-destaque));
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      display: inline-block;
+    }
+
+    /* Barra de pesquisa e filtros */
+    .filtros-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 32px;
+      background: white;
+      padding: 20px;
+      border-radius: 28px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--cinza-borda);
+    }
+
+    .search-input {
+      flex: 2;
+      padding: 12px 18px;
+      border: 1px solid var(--cinza-borda);
+      border-radius: 40px;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .filter-select {
+      padding: 12px 18px;
+      border-radius: 40px;
+      border: 1px solid var(--cinza-borda);
+      background: white;
+      font-weight: 500;
+    }
+
+    /* Grid de cards de ocorrências */
+    .ocorrencias-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 28px;
+      margin-bottom: 60px;
+    }
+
+    .card-ocorrencia {
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+      transition: var(--transition);
+      border: 1px solid var(--cinza-borda);
+      cursor: pointer;
+    }
+
+    .card-ocorrencia:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card-img-top {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card-date {
+      color: var(--texto-suave);
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .prioridade-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    /* Seção ocorrências críticas */
+    .criticas-section {
+      background: white;
+      border-radius: 28px;
+      padding: 28px;
+      margin-top: 20px;
+      border: 1px solid var(--cinza-borda);
+    }
+
+    .criticas-section h2 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ranking-list {
+      list-style: none;
+    }
+
+    .ranking-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--cinza-borda);
+    }
+
+    .ranking-list li strong {
+      font-weight: 600;
+    }
+
+    .nota {
+      background: var(--azul-claro);
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-weight: 600;
+      color: var(--azul-destaque);
+    }
+
+    /* Modal de detalhes */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(5px);
+      z-index: 1200;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      max-width: 700px;
+      width: 90%;
+      border-radius: 32px;
+      padding: 24px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-content .close-modal {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .modal-fotos {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+      overflow-x: auto;
+    }
+
+    .modal-fotos img {
+      width: 120px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 16px;
+    }
+
+    .votacao-buttons {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .voto-btn {
+      background: #f1f5f9;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .voto-btn:hover {
+      background: var(--verde-principal);
+      color: white;
+    }
+
+    .mensagem-voto {
+      font-size: 0.8rem;
+      color: var(--texto-suave);
+    }
+
+    footer {
+      background: #1e293b;
+      color: #cbd5e1;
+      padding: 40px 8% 24px;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+      .menu-hamburger {
+        display: block;
+      }
+      .filtros-bar {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo" id="logoHome">🏘️ Portal do Bairro</div>
+  <button class="menu-hamburger" id="hamburgerBtn"><i class="fas fa-bars"></i></button>
+  <div class="nav-links">
+    <a href="index.html">Início</a>
+    <a href="ocorrencias.html" style="color: var(--verde-principal); font-weight: 600;">Ocorrências</a>
+    <a href="#" id="perfilLinkNav">Perfil</a>
+    <button class="btn-outline-header" id="loginNavBtn">Entrar</button>
+  </div>
+</header>
+
+<!-- Sidebar sanduíche -->
+<div class="sidebar" id="sidebar">
+  <a href="index.html"><i class="fas fa-home"></i> Início</a>
+  <a href="ocorrencias.html"><i class="fas fa-exclamation-triangle"></i> Ocorrências</a>
+  <a href="#" id="perfilSidebar"><i class="fas fa-user-circle"></i> Perfil</a>
+  <hr>
+  <a href="#" id="loginSidebar"><i class="fas fa-sign-in-alt"></i> Entrar</a>
+</div>
+<div class="overlay" id="overlay"></div>
+
+<main>
+  <div class="page-header">
+    <h1><i class="fas fa-exclamation-triangle"></i> Ocorrências da comunidade</h1>
+    <p>Reporte problemas, acompanhe e ajude a priorizar as soluções.</p>
+  </div>
+
+  <!-- Filtros e pesquisa -->
+  <div class="filtros-bar">
+    <input type="text" id="searchInput" class="search-input" placeholder="Pesquisar por título, local...">
+    <select id="statusFilter" class="filter-select">
+      <option value="todos">Todos os status</option>
+      <option value="0">Pendente</option>
+      <option value="1">Em análise</option>
+      <option value="2">Resolvido</option>
+    </select>
+    <select id="prioridadeFilter" class="filter-select">
+      <option value="0">Todas prioridades</option>
+      <option value="1">Baixa</option>
+      <option value="2">Média</option>
+      <option value="3">Alta</option>
+      <option value="4">Urgente</option>
+    </select>
+    <button id="novaOcorrenciaBtn" class="btn-outline-header" style="background: var(--verde-principal); color:white;">+ Nova ocorrência</button>
+  </div>
+
+  <!-- Grid de cards (será preenchido via JS) -->
+  <div id="ocorrenciasGrid" class="ocorrencias-grid">
+    <!-- cards mockados via JS -->
+  </div>
+
+  <!-- Seção de ocorrências mais críticas (ranking) -->
+  <div class="criticas-section">
+    <h2><i class="fas fa-chart-line"></i> Ocorrências mais críticas</h2>
+    <ul id="rankingList" class="ranking-list">
+      <!-- preenchido dinamicamente -->
+    </ul>
+  </div>
+</main>
+
+<!-- Modal de detalhes da ocorrência -->
+<div id="modalOcorrencia" class="modal">
+  <div class="modal-content">
+    <span class="close-modal">&times;</span>
+    <h2 id="modalTitulo">Título</h2>
+    <div id="modalFotos" class="modal-fotos"></div>
+    <p><strong>Local:</strong> <span id="modalLocal"></span></p>
+    <p><strong>Descrição:</strong> <span id="modalDescricao"></span></p>
+    <p><strong>Status:</strong> <span id="modalStatus"></span></p>
+    <p><strong>Prioridade média:</strong> <span id="modalPrioridadeMedia"></span> ★</p>
+
+    <div class="votacao-buttons" id="votacaoArea">
+      <button class="voto-btn" data-nota="1">⬤ Baixa</button>
+      <button class="voto-btn" data-nota="2">⬤ Média</button>
+      <button class="voto-btn" data-nota="3">⬤ Alta</button>
+      <button class="voto-btn" data-nota="4">⬤ Urgente</button>
+    </div>
+    <div id="mensagemVoto" class="mensagem-voto"></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-grid" style="display:flex; justify-content:space-between; flex-wrap:wrap;">
+    <div><h4>Portal do Bairro</h4><p>União e transformação</p></div>
+    <div><h4>Contato</h4><p>ouvidoria@bairro.com</p></div>
+  </div>
+  <div class="footer-bottom" style="text-align:center; margin-top:20px;">© 2026 – Comunidade ativa</div>
+</footer>
+
+<script>
+  // ---------- DADOS MOCKADOS PARA SIMULAÇÃO (futuramente API) ----------
+  let ocorrenciasMock = [
+    { id: 1, titulo: "Buraco na Rua das Acácias", descricao: "Grande buraco próximo ao cruzamento, risco para veículos.", local: "Rua das Acácias, 123", data: "2026-04-20", status: 0, prioridadeMedia: 3.2, fotos: ["https://picsum.photos/id/13/200/150", "https://picsum.photos/id/15/200/150", "https://picsum.photos/id/22/200/150"] },
+    { id: 2, titulo: "Iluminação pública queimada", descricao: "Poste apagado há 3 semanas na praça central.", local: "Praça Central, próximo ao coreto", data: "2026-04-18", status: 1, prioridadeMedia: 2.5, fotos: ["https://picsum.photos/id/26/200/150", "https://picsum.photos/id/28/200/150", "https://picsum.photos/id/34/200/150"] },
+    { id: 3, titulo: "Acúmulo de lixo", descricao: "Lixo acumulado na esquina, mau cheiro e ratos.", local: "Rua das Margaridas, 45", data: "2026-04-15", status: 0, prioridadeMedia: 4.0, fotos: ["https://picsum.photos/id/29/200/150", "https://picsum.photos/id/119/200/150", "https://picsum.photos/id/121/200/150"] },
+    { id: 4, titulo: "Falta de sinalização", descricao: "Placa de pare danificada, muito perigo.", local: "Av. Principal esquina com Rua B", data: "2026-04-10", status: 2, prioridadeMedia: 1.8, fotos: ["https://picsum.photos/id/55/200/150", "https://picsum.photos/id/52/200/150", "https://picsum.photos/id/57/200/150"] }
+  ];
+
+  // Simular votos já realizados pelo usuário (para exemplo, nenhum)
+  let votosUsuario = {}; // chave: ocorrenciaId, valor: nota
+
+  let currentUserId = null; // mock de usuário logado (null = deslogado)
+
+  // Elementos DOM
+  const gridEl = document.getElementById("ocorrenciasGrid");
+  const rankingEl = document.getElementById("rankingList");
+  const searchInput = document.getElementById("searchInput");
+  const statusFilter = document.getElementById("statusFilter");
+  const prioridadeFilter = document.getElementById("prioridadeFilter");
+  const modal = document.getElementById("modalOcorrencia");
+  let currentOcorrencia = null;
+
+  // Funções auxiliares
+  function getStatusText(status) {
+    if (status === 0) return "Pendente";
+    if (status === 1) return "Em análise";
+    return "Resolvido";
+  }
+
+  function getPrioridadeLabel(media) {
+    if (media >= 3.5) return "Urgente";
+    if (media >= 2.5) return "Alta";
+    if (media >= 1.5) return "Média";
+    return "Baixa";
+  }
+
+  // Renderizar grid com filtros
+  function renderOcorrencias() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const statusVal = statusFilter.value;
+    const prioridadeVal = prioridadeFilter.value;
+
+    let filtered = ocorrenciasMock.filter(occ => {
+      const matchSearch = occ.titulo.toLowerCase().includes(searchTerm) || occ.local.toLowerCase().includes(searchTerm);
+      const matchStatus = (statusVal === "todos") || (occ.status === parseInt(statusVal));
+      let prioridadeCategoria = getPrioridadeLabel(occ.prioridadeMedia);
+      let prioridadeNum = 0;
+      if (prioridadeCategoria === "Baixa") prioridadeNum = 1;
+      else if (prioridadeCategoria === "Média") prioridadeNum = 2;
+      else if (prioridadeCategoria === "Alta") prioridadeNum = 3;
+      else prioridadeNum = 4;
+      const matchPrioridade = (prioridadeVal === "0") || (prioridadeNum === parseInt(prioridadeVal));
+      return matchSearch && matchStatus && matchPrioridade;
+    });
+
+    gridEl.innerHTML = filtered.map(occ => `
+      <div class="card-ocorrencia" data-id="${occ.id}">
+        <img class="card-img-top" src="${occ.fotos[0]}" alt="foto">
+        <div class="card-body">
+          <div class="card-title">${occ.titulo}</div>
+          <div class="card-date"><i class="far fa-calendar-alt"></i> ${new Date(occ.data).toLocaleDateString()}</div>
+          <div class="prioridade-badge">${getPrioridadeLabel(occ.prioridadeMedia)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Adicionar evento de clique nos cards
+    document.querySelectorAll('.card-ocorrencia').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = parseInt(card.dataset.id);
+        const ocorrencia = ocorrenciasMock.find(o => o.id === id);
+        if (ocorrencia) abrirModal(ocorrencia);
+      });
+    });
+  }
+
+  // Renderizar ranking das mais críticas (maior prioridadeMedia)
+  function renderRanking() {
+    const sorted = [...ocorrenciasMock].sort((a,b) => b.prioridadeMedia - a.prioridadeMedia);
+    const top3 = sorted.slice(0,3);
+    rankingEl.innerHTML = top3.map(occ => `
+      <li>
+        <strong>${occ.titulo}</strong>
+        <span class="nota">${occ.prioridadeMedia.toFixed(1)} ★ (${getPrioridadeLabel(occ.prioridadeMedia)})</span>
+      </li>
+    `).join('');
+    if (top3.length === 0) rankingEl.innerHTML = '<li>Nenhuma ocorrência crítica no momento.</li>';
+  }
+
+  // Modal
+  function abrirModal(ocorrencia) {
+    currentOcorrencia = ocorrencia;
+    document.getElementById("modalTitulo").innerText = ocorrencia.titulo;
+    document.getElementById("modalLocal").innerText = ocorrencia.local;
+    document.getElementById("modalDescricao").innerText = ocorrencia.descricao;
+    document.getElementById("modalStatus").innerText = getStatusText(ocorrencia.status);
+    document.getElementById("modalPrioridadeMedia").innerText = ocorrencia.prioridadeMedia.toFixed(1);
+
+    const fotosDiv = document.getElementById("modalFotos");
+    fotosDiv.innerHTML = ocorrencia.fotos.map(f => `<img src="${f}" alt="foto">`).join('');
+
+    const mensagemDiv = document.getElementById("mensagemVoto");
+    const votoJaRealizado = votosUsuario[ocorrencia.id];
+    if (currentUserId && votoJaRealizado) {
+      mensagemDiv.innerHTML = `Você já votou neste problema (nota: ${votoJaRealizado}). Obrigado!`;
+      document.querySelectorAll('.voto-btn').forEach(btn => btn.disabled = true);
+    } else if (!currentUserId) {
+      mensagemDiv.innerHTML = `Faça login para votar e ajudar a priorizar.`;
+      document.querySelectorAll('.voto-btn').forEach(btn => btn.disabled = true);
+    } else {
+      mensagemDiv.innerHTML = `Selecione a gravidade (seu voto influencia a prioridade)`;
+      document.querySelectorAll('.voto-btn').forEach(btn => btn.disabled = false);
+    }
+
+    modal.classList.add("active");
+  }
+
+  // Fechar modal
+  function fecharModal() {
+    modal.classList.remove("active");
+  }
+
+  // Simular voto (mock)
+  function votar(nota) {
+    if (!currentUserId) {
+      alert("Você precisa estar logado para votar.");
+      return;
+    }
+    if (votosUsuario[currentOcorrencia.id]) {
+      alert("Você já votou nesta ocorrência!");
+      return;
+    }
+    // Simular registro de voto e recalcular média
+    votosUsuario[currentOcorrencia.id] = nota;
+    // Recalcular média mock (simples: nova média = (antiga * totalVotosAntes + nota) / (totalVotosAntes+1))
+    let totalVotosAntes = Object.values(votosUsuario).length; // simplificado
+    let novaMedia = (currentOcorrencia.prioridadeMedia * totalVotosAntes + nota) / (totalVotosAntes + 1);
+    currentOcorrencia.prioridadeMedia = parseFloat(novaMedia.toFixed(1));
+    // Atualizar no array original
+    const index = ocorrenciasMock.findIndex(o => o.id === currentOcorrencia.id);
+    if (index !== -1) ocorrenciasMock[index].prioridadeMedia = currentOcorrencia.prioridadeMedia;
+    
+    // Re-renderizar
+    renderOcorrencias();
+    renderRanking();
+    fecharModal();
+    alert("Voto computado! A prioridade foi atualizada.");
+  }
+
+  // Simular login (mock)
+  function fazerLogin() {
+    currentUserId = 1;
+    alert("Login simulado como 'Morador Teste'. Agora você pode votar e criar ocorrências.");
+    document.getElementById("loginNavBtn").innerText = "Sair";
+    document.getElementById("loginSidebar").innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
+    // Atualizar interface (habilitar votos na próxima abertura)
+  }
+
+  function logout() {
+    currentUserId = null;
+    votosUsuario = {};
+    alert("Logout realizado.");
+    document.getElementById("loginNavBtn").innerText = "Entrar";
+    document.getElementById("loginSidebar").innerHTML = '<i class="fas fa-sign-in-alt"></i> Entrar';
+    renderOcorrencias();
+    renderRanking();
+  }
+
+  // Eventos de login/logout mock
+  document.getElementById("loginNavBtn").addEventListener("click", () => {
+    if (currentUserId) logout();
+    else fazerLogin();
+  });
+  document.getElementById("loginSidebar").addEventListener("click", () => {
+    if (currentUserId) logout();
+    else fazerLogin();
+  });
+
+  // Nova ocorrência mock (apenas aviso)
+  document.getElementById("novaOcorrenciaBtn").addEventListener("click", () => {
+    if (!currentUserId) {
+      alert("Faça login para cadastrar uma nova ocorrência.");
+      return;
+    }
+    alert("Função de cadastro de ocorrência será integrada com back-end em breve.");
+  });
+
+  // Eventos do modal
+  document.querySelector(".close-modal").addEventListener("click", fecharModal);
+  window.addEventListener("click", (e) => { if (e.target === modal) fecharModal(); });
+  document.querySelectorAll(".voto-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const nota = parseInt(btn.dataset.nota);
+      votar(nota);
+    });
+  });
+
+  // Filtros
+  searchInput.addEventListener("input", () => renderOcorrencias());
+  statusFilter.addEventListener("change", () => renderOcorrencias());
+  prioridadeFilter.addEventListener("change", () => renderOcorrencias());
+
+  // Menu sanduíche
+  const hamburger = document.getElementById("hamburgerBtn");
+  const sidebar = document.getElementById("sidebar");
+  const overlayDiv = document.getElementById("overlay");
+  function toggleSidebar() {
+    sidebar.classList.toggle("open");
+    overlayDiv.classList.toggle("active");
+  }
+  hamburger.addEventListener("click", toggleSidebar);
+  overlayDiv.addEventListener("click", toggleSidebar);
+
+  // Links provisórios
+  document.getElementById("perfilLinkNav")?.addEventListener("click", (e) => { e.preventDefault(); alert("Página de perfil em construção."); });
+  document.getElementById("perfilSidebar")?.addEventListener("click", (e) => { e.preventDefault(); alert("Página de perfil em breve."); });
+
+  // Inicialização
+  renderOcorrencias();
+  renderRanking();
+</script>
+</body>
+</html>
