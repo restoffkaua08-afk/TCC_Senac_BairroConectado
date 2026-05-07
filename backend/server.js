@@ -28,10 +28,12 @@ const ocorrencias = new Datastore({
 });
 
 users.ensureIndex({ fieldName: "email", unique: true }, () => {});
+ocorrencias.ensureIndex({ fieldName: "createdAt" }, () => {});
+ocorrencias.ensureIndex({ fieldName: "prioridadeScore" }, () => {});
 
 app.use(cors());
-app.use(express.json({ limit: "15mb" }));
-app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 
 function one(db, query) {
   return new Promise((resolve, reject) => {
@@ -53,9 +55,9 @@ function insert(db, doc) {
   });
 }
 
-function update(db, query, data) {
+function update(db, query, data, options = {}) {
   return new Promise((resolve, reject) => {
-    db.update(query, data, {}, (err, count) => err ? reject(err) : resolve(count));
+    db.update(query, data, options, (err, affected) => err ? reject(err) : resolve(affected));
   });
 }
 
@@ -63,6 +65,34 @@ function count(db, query = {}) {
   return new Promise((resolve, reject) => {
     db.count(query, (err, total) => err ? reject(err) : resolve(total));
   });
+}
+
+function cleanText(value) {
+  return String(value || "").trim();
+}
+
+function cleanEmail(value) {
+  return cleanText(value).toLowerCase();
+}
+
+function defaultOccurrenceImage(title = "Ocorrência") {
+  const safeTitle = String(title).replace(/[<>&'"]/g, "");
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#0f172a"/>
+        <stop offset="100%" stop-color="#2563eb"/>
+      </linearGradient>
+    </defs>
+    <rect width="900" height="520" fill="url(#g)"/>
+    <circle cx="720" cy="110" r="120" fill="rgba(255,255,255,.12)"/>
+    <circle cx="120" cy="420" r="160" fill="rgba(255,255,255,.10)"/>
+    <text x="70" y="230" fill="#ffffff" font-size="54" font-family="Arial" font-weight="800">Bairro Conectado</text>
+    <text x="70" y="305" fill="#dbeafe" font-size="32" font-family="Arial">${safeTitle}</text>
+  </svg>`;
+
+  return "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
 }
 
 function userSafe(user) {
@@ -73,7 +103,9 @@ function userSafe(user) {
     email: user.email || "",
     telefone: user.telefone || "",
     endereco: user.endereco || "",
-    foto: user.foto || ""
+    foto: user.foto || "",
+    createdAt: user.createdAt || "",
+    updatedAt: user.updatedAt || ""
   };
 }
 
@@ -149,6 +181,8 @@ function occurrenceSafe(item) {
   return {
     ...item,
     id: item._id,
+    foto: item.foto || item.imagem || defaultOccurrenceImage(item.titulo),
+    imagem: item.foto || item.imagem || defaultOccurrenceImage(item.titulo),
     prioridadeScore: Number(average.toFixed(2)),
     prioridade: priorityFromScore(average),
     totalVotos: values.length
@@ -157,14 +191,28 @@ function occurrenceSafe(item) {
 
 async function seed() {
   const total = await count(ocorrencias);
-  if (total > 0) return;
+  if (total > 0) {
+    const docs = await many(ocorrencias, {});
+    for (const item of docs) {
+      if (!item.foto && !item.imagem) {
+        await update(ocorrencias, { _id: item._id }, {
+          $set: {
+            foto: defaultOccurrenceImage(item.titulo),
+            imagem: defaultOccurrenceImage(item.titulo),
+            updatedAt: new Date().toISOString()
+          }
+        });
+      }
+    }
+    return;
+  }
 
   const now = new Date().toISOString();
 
   const dados = [
     {
       titulo: "Buraco na rua principal",
-      descricao: "Buraco grande atrapalhando o trânsito e oferecendo risco para moradores.",
+      descricao: "Buraco grande atrapalhando o trânsito e oferecendo risco para moradores, motos e carros.",
       categoria: "Infraestrutura",
       bairro: "Centro",
       endereco: "Rua Principal",
@@ -197,6 +245,8 @@ async function seed() {
   for (const item of dados) {
     await insert(ocorrencias, {
       ...item,
+      foto: defaultOccurrenceImage(item.titulo),
+      imagem: defaultOccurrenceImage(item.titulo),
       votos: {},
       createdAt: now,
       updatedAt: now
@@ -208,15 +258,18 @@ app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
     sistema: "Bairro Conectado",
-    status: "Backend funcionando",
+    backend: "Node.js + Express",
+    banco: "NeDB",
+    status: "Funcionando",
     url: `http://localhost:${PORT}`
   });
 });
 
 app.post("/api/auth/register", asyncRoute(async (req, res) => {
-  const nome = String(req.body.nome || "").trim();
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const senha = String(req.body.senha || req.body.password || "").trim();
+  const nome = cleanText(req.body.nome);
+  const email = cleanEmail(req.body.email);
+  const senha = cleanText(req.body.senha || req.body.password);
+  const foto = cleanText(req.body.foto);
 
   if (!nome || !email || !senha) {
     return res.status(400).json({ message: "Nome, email e senha são obrigatórios." });
@@ -241,7 +294,7 @@ app.post("/api/auth/register", asyncRoute(async (req, res) => {
     senhaHash,
     telefone: "",
     endereco: "",
-    foto: "",
+    foto,
     createdAt: now,
     updatedAt: now
   });
@@ -254,8 +307,8 @@ app.post("/api/auth/register", asyncRoute(async (req, res) => {
 }));
 
 app.post("/api/auth/login", asyncRoute(async (req, res) => {
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const senha = String(req.body.senha || req.body.password || "").trim();
+  const email = cleanEmail(req.body.email);
+  const senha = cleanText(req.body.senha || req.body.password);
 
   if (!email || !senha) {
     return res.status(400).json({ message: "Email e senha são obrigatórios." });
@@ -285,7 +338,7 @@ app.get("/api/auth/profile", auth, asyncRoute(async (req, res) => {
 }));
 
 app.put("/api/auth/profile", auth, asyncRoute(async (req, res) => {
-  const nome = String(req.body.nome || "").trim();
+  const nome = cleanText(req.body.nome);
 
   if (!nome) {
     return res.status(400).json({ message: "Nome é obrigatório." });
@@ -294,9 +347,9 @@ app.put("/api/auth/profile", auth, asyncRoute(async (req, res) => {
   await update(users, { _id: req.user._id }, {
     $set: {
       nome,
-      telefone: String(req.body.telefone || "").trim(),
-      endereco: String(req.body.endereco || "").trim(),
-      foto: String(req.body.foto || "").trim(),
+      telefone: cleanText(req.body.telefone),
+      endereco: cleanText(req.body.endereco),
+      foto: cleanText(req.body.foto),
       updatedAt: new Date().toISOString()
     }
   });
@@ -315,22 +368,29 @@ app.get("/api/ocorrencias", asyncRoute(async (req, res) => {
 }));
 
 app.post("/api/ocorrencias", auth, asyncRoute(async (req, res) => {
-  const titulo = String(req.body.titulo || "").trim();
-  const descricao = String(req.body.descricao || "").trim();
+  const titulo = cleanText(req.body.titulo);
+  const descricao = cleanText(req.body.descricao);
+  const foto = cleanText(req.body.foto || req.body.imagem);
 
   if (!titulo || !descricao) {
     return res.status(400).json({ message: "Título e descrição são obrigatórios." });
   }
 
-  const prioridade = String(req.body.prioridade || "media").toLowerCase();
+  if (!foto) {
+    return res.status(400).json({ message: "A ocorrência precisa ter pelo menos uma foto." });
+  }
+
+  const prioridade = cleanText(req.body.prioridade || "media").toLowerCase();
   const now = new Date().toISOString();
 
   const created = await insert(ocorrencias, {
     titulo,
     descricao,
-    categoria: String(req.body.categoria || "Geral").trim(),
-    bairro: String(req.body.bairro || "").trim(),
-    endereco: String(req.body.endereco || "").trim(),
+    categoria: cleanText(req.body.categoria || "Geral"),
+    bairro: cleanText(req.body.bairro),
+    endereco: cleanText(req.body.endereco),
+    foto,
+    imagem: foto,
     status: "aberta",
     prioridade,
     prioridadeScore: score(prioridade),
@@ -354,7 +414,7 @@ app.post("/api/ocorrencias/:id/vote", auth, asyncRoute(async (req, res) => {
     return res.status(404).json({ message: "Ocorrência não encontrada." });
   }
 
-  const voto = String(req.body.prioridade || req.body.voto || "media").toLowerCase();
+  const voto = cleanText(req.body.prioridade || req.body.voto || "media").toLowerCase();
   const votos = { ...(item.votos || {}), [req.user._id]: voto };
   const values = Object.values(votos).map(score);
   const average = values.reduce((a, b) => a + b, 0) / values.length;
@@ -380,7 +440,7 @@ app.get("/api/ocorrencias/ranking", asyncRoute(async (req, res) => {
   const docs = await many(ocorrencias, {});
   const ranking = docs
     .map(occurrenceSafe)
-    .sort((a, b) => b.prioridadeScore - a.prioridadeScore || b.totalVotos - a.totalVotos)
+    .sort((a, b) => b.prioridadeScore - a.prioridadeScore || b.totalVotos - a.totalVotos || new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 10);
 
   res.json({ ranking });
@@ -407,6 +467,7 @@ app.get("*", (req, res) => {
 seed().then(() => {
   app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Backend: Node.js + Express`);
     console.log(`Health check: http://localhost:${PORT}/api/health`);
   });
 });
