@@ -1,0 +1,435 @@
+﻿/* =========================================================
+   BAIRRO CONECTADO — POLIMENTO INSTITUCIONAL
+   ========================================================= */
+
+:root{
+  --civic-bg:#f6f8fb;
+  --civic-white:#ffffff;
+  --civic-text:#0f172a;
+  --civic-muted:#64748b;
+  --civic-line:#e2e8f0;
+  --civic-blue:#2563eb;
+  --civic-blue-dark:#1e40af;
+  --civic-green:#16a34a;
+  --civic-green-dark:#15803d;
+  --civic-black:#0f172a;
+  --civic-shadow:0 22px 70px rgba(15,23,42,.11);
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  background:var(--civic-bg);
+}
+
+/* Remove menu duplicado do topo.
+   O topo fica apenas com sanduíche + identidade. */
+.bc-topnav{
+  display:none !important;
+}
+
+.bc-topbar{
+  min-height:74px !important;
+  padding:12px clamp(18px,5vw,76px) !important;
+  background:rgba(255,255,255,.94) !important;
+  border-bottom:1px solid var(--civic-line) !important;
+  box-shadow:0 10px 35px rgba(15,23,42,.055) !important;
+}
+
+.bc-brand strong{
+  font-size:19px !important;
+  letter-spacing:-.02em;
+}
+
+.bc-brand span{
+  color:var(--civic-muted) !important;
+}
+
+/* HOME — hero de tela cheia */
+.home-hero{
+  min-height:calc(100vh - 74px) !important;
+  padding:clamp(56px,8vw,110px) clamp(22px,6vw,92px) !important;
+  background:
+    linear-gradient(90deg, rgba(15,23,42,.94) 0%, rgba(15,23,42,.80) 44%, rgba(37,99,235,.35) 100%),
+    url("https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1900&q=85") center/cover no-repeat !important;
+}
+
+.home-hero-content{
+  max-width:1040px !important;
+}
+
+.home-kicker{
+  background:rgba(255,255,255,.13) !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  color:#dbeafe !important;
+}
+
+.home-hero h1{
+  max-width:980px !important;
+  font-size:clamp(48px,8vw,96px) !important;
+  letter-spacing:-.06em !important;
+}
+
+.home-hero p{
+  max-width:820px !important;
+  font-size:clamp(18px,2.1vw,23px) !important;
+}
+
+/* Menu interno só abaixo da imagem */
+.home-internal-nav-wrap{
+  position:sticky;
+  top:74px;
+  z-index:8000;
+  background:rgba(255,255,255,.96) !important;
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--civic-line);
+}
+
+.home-internal-nav{
+  padding:18px clamp(18px,5vw,76px) !important;
+  gap:12px !important;
+}
+
+.home-internal-nav a{
+  padding:12px 17px !important;
+  border-radius:999px !important;
+  background:#fff !important;
+  border:1px solid var(--civic-line) !important;
+  box-shadow:0 8px 24px rgba(15,23,42,.055);
+}
+
+.home-internal-nav a:hover{
+  background:#eff6ff !important;
+  color:var(--civic-blue) !important;
+  transform:translateY(-1px);
+}
+
+/* Mais espaço, menos aperto */
+.home-section{
+  padding:84px clamp(18px,5vw,84px) !important;
+}
+
+.home-section-inner{
+  width:min(1480px,100%) !important;
+}
+
+.home-section-title{
+  margin-bottom:32px !important;
+}
+
+.home-section-title h2{
+  font-size:clamp(32px,4.4vw,54px) !important;
+  letter-spacing:-.045em !important;
+}
+
+.home-section-title p{
+  font-size:18px !important;
+  max-width:760px !important;
+}
+
+.home-carousel{
+  border-radius:34px !important;
+  box-shadow:var(--civic-shadow) !important;
+}
+
+.home-banner{
+  min-height:430px !important;
+}
+
+.home-banner-copy{
+  padding:clamp(28px,4vw,56px) !important;
+}
+
+.home-banner-copy h3{
+  font-size:clamp(30px,4.4vw,54px) !important;
+}
+
+.home-banner-img{
+  min-height:430px !important;
+}
+
+.home-card-grid{
+  gap:28px !important;
+}
+
+.home-card{
+  border-radius:30px !important;
+  box-shadow:0 16px 48px rgba(15,23,42,.085) !important;
+}
+
+.home-card img{
+  height:220px !important;
+}
+
+.home-card-body{
+  padding:24px !important;
+}
+
+.home-card-body h3{
+  font-size:24px !important;
+}
+
+.home-wide-cta{
+  margin-top:34px !important;
+  padding:clamp(30px,5vw,54px) !important;
+  border-radius:34px !important;
+}
+
+/* MAPA DA CIDADE */
+.home-map-section{
+  width:100%;
+  padding:84px clamp(18px,5vw,84px);
+  box-sizing:border-box;
+  background:#fff;
+}
+
+.home-map-inner{
+  width:min(1480px,100%);
+  margin:0 auto;
+}
+
+.home-map-grid{
+  display:grid;
+  grid-template-columns:.78fr 1.22fr;
+  gap:32px;
+  align-items:stretch;
+}
+
+.home-map-copy{
+  padding:34px;
+  border-radius:34px;
+  background:
+    linear-gradient(135deg, rgba(15,23,42,.96), rgba(30,64,175,.82)),
+    url("https://images.unsplash.com/photo-1465447142348-e9952c393450?auto=format&fit=crop&w=1100&q=80") center/cover no-repeat;
+  color:#fff;
+  box-shadow:var(--civic-shadow);
+  min-height:420px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
+
+.home-map-copy span{
+  width:max-content;
+  display:inline-flex;
+  padding:8px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.14);
+  border:1px solid rgba(255,255,255,.24);
+  color:#dbeafe;
+  font-size:12px;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  margin-bottom:16px;
+}
+
+.home-map-copy h2{
+  margin:0;
+  font-size:clamp(32px,4.5vw,56px);
+  line-height:.98;
+  letter-spacing:-.05em;
+}
+
+.home-map-copy p{
+  margin:18px 0 0;
+  color:#dbeafe;
+  font-size:18px;
+  line-height:1.55;
+}
+
+.home-map-panel{
+  border-radius:34px;
+  overflow:hidden;
+  border:1px solid var(--civic-line);
+  box-shadow:var(--civic-shadow);
+  background:#e2e8f0;
+  min-height:420px;
+}
+
+.home-map-panel iframe{
+  width:100%;
+  height:100%;
+  min-height:520px;
+  border:0;
+  display:block;
+}
+
+.home-map-info{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:18px;
+  margin-top:24px;
+}
+
+.home-map-info article{
+  padding:22px;
+  border-radius:24px;
+  background:#f8fafc;
+  border:1px solid var(--civic-line);
+}
+
+.home-map-info h3{
+  margin:0 0 8px;
+  font-size:20px;
+}
+
+.home-map-info p{
+  margin:0;
+  color:var(--civic-muted);
+  line-height:1.5;
+}
+
+/* OCORRÊNCIAS — padrão mais institucional */
+.bc-shell{
+  width:min(1480px,calc(100% - 36px)) !important;
+  margin:42px auto 90px !important;
+}
+
+.bc-page-hero{
+  margin-bottom:34px !important;
+  padding:clamp(34px,6vw,72px) !important;
+  border-radius:34px !important;
+  background:
+    linear-gradient(135deg, rgba(15,23,42,.96), rgba(37,99,235,.76)),
+    url("https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1700&q=80") center/cover no-repeat !important;
+  box-shadow:var(--civic-shadow) !important;
+}
+
+.bc-page-hero h1{
+  font-size:clamp(38px,6vw,76px) !important;
+  letter-spacing:-.055em !important;
+}
+
+.bc-page-hero p{
+  max-width:820px !important;
+  font-size:19px !important;
+}
+
+.bc-section{
+  padding:clamp(24px,3.5vw,40px) !important;
+  border-radius:32px !important;
+  margin-bottom:32px !important;
+  box-shadow:0 18px 55px rgba(15,23,42,.08) !important;
+}
+
+.bc-section-title{
+  margin-bottom:24px !important;
+}
+
+.bc-section-title h2{
+  font-size:clamp(26px,3.6vw,42px) !important;
+  letter-spacing:-.035em;
+}
+
+.bc-section-title p{
+  font-size:17px;
+  color:var(--civic-muted);
+}
+
+.bc-rank-list{
+  gap:14px !important;
+}
+
+.bc-rank-item{
+  padding:18px !important;
+  border-radius:22px !important;
+  background:#fff !important;
+  box-shadow:0 10px 30px rgba(15,23,42,.055);
+  transition:.18s ease;
+}
+
+.bc-rank-item:hover{
+  transform:translateY(-2px);
+  border-color:#bfdbfe !important;
+  box-shadow:0 16px 44px rgba(37,99,235,.12);
+}
+
+.bc-grid{
+  gap:26px !important;
+}
+
+.bc-card{
+  border-radius:28px !important;
+  box-shadow:0 16px 48px rgba(15,23,42,.085) !important;
+}
+
+.bc-card-img{
+  height:240px !important;
+}
+
+.bc-card-body{
+  padding:24px !important;
+}
+
+.bc-card h3{
+  font-size:24px !important;
+}
+
+.bc-form-grid{
+  gap:18px !important;
+}
+
+.bc-field{
+  margin-bottom:18px !important;
+}
+
+.bc-field input,
+.bc-field textarea,
+.bc-field select{
+  border-radius:18px !important;
+  padding:15px 16px !important;
+}
+
+.bc-actions{
+  gap:12px !important;
+}
+
+.bc-btn{
+  border-radius:16px !important;
+  padding:13px 17px !important;
+}
+
+@media(max-width:1000px){
+  .home-map-grid{
+    grid-template-columns:1fr;
+  }
+
+  .home-map-info{
+    grid-template-columns:1fr;
+  }
+
+  .home-map-copy{
+    min-height:360px;
+  }
+}
+
+@media(max-width:720px){
+  .home-hero{
+    min-height:calc(100vh - 74px) !important;
+  }
+
+  .home-section,
+  .home-map-section{
+    padding:54px 16px !important;
+  }
+
+  .home-banner{
+    grid-template-columns:1fr !important;
+  }
+
+  .home-banner-img{
+    min-height:260px !important;
+    order:-1;
+  }
+
+  .home-card-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  .home-internal-nav-wrap{
+    top:74px;
+  }
+}

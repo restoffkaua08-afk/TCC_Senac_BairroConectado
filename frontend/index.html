@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bairro Conectado</title>
   <link rel="stylesheet" href="/css/home-front.css">
+  <link rel="stylesheet" href="/css/civic-polish.css">
 </head>
 <body>
   <main class="home-page">
@@ -29,6 +30,7 @@
         <a href="#empregos">Empregos</a>
         <a href="#projetos">Projetos</a>
         <a href="#servicos">Serviços</a>
+        <a href="#mapa">Mapa</a>
       </nav>
     </div>
 
@@ -203,10 +205,57 @@
         </div>
       </div>
     </section>
+  
+    <section id="mapa" class="home-map-section">
+      <div class="home-map-inner">
+        <div class="home-section-title">
+          <div>
+            <div class="home-section-tag">Mapa urbano</div>
+            <h2>Mapa da cidade</h2>
+            <p>Visualize a região atendida pelo portal, acompanhe áreas de interesse e fortaleça a participação local por território.</p>
+          </div>
+        </div>
+
+        <div class="home-map-grid">
+          <div class="home-map-copy">
+            <span>Território conectado</span>
+            <h2>Informação organizada por região</h2>
+            <p>O mapa ajuda moradores e gestores a enxergar melhor os bairros, demandas, serviços e pontos de atenção da cidade.</p>
+          </div>
+
+          <div class="home-map-panel">
+            <iframe
+              title="Mapa da cidade"
+              loading="lazy"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=-44.145%2C-19.998%2C-43.970%2C-19.850&amp;layer=mapnik">
+            </iframe>
+          </div>
+        </div>
+
+        <div class="home-map-info">
+          <article>
+            <h3>Regiões monitoradas</h3>
+            <p>Base para acompanhar demandas urbanas por bairro e localização.</p>
+          </article>
+
+          <article>
+            <h3>Serviços próximos</h3>
+            <p>Estrutura preparada para exibir pontos úteis, comércio, obras e serviços públicos.</p>
+          </article>
+
+          <article>
+            <h3>Gestão visual</h3>
+            <p>Facilita a leitura da cidade e torna o portal mais próximo do cidadão.</p>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/menu-fix.js"></script>
   <script src="/js/home-front.js"></script>
+  <script src="/js/civic-polish.js"></script>
 </body>
 </html>
+
