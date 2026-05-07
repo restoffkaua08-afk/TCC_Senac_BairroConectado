@@ -4,305 +4,209 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bairro Conectado</title>
-  <link rel="stylesheet" href="/css/site-theme.css">
+  <link rel="stylesheet" href="/css/home-front.css">
 </head>
 <body>
-  <main class="bc-home-shell">
-    <section class="bc-home-hero">
-      <h1>Bairro Conectado</h1>
-      <p>Um portal comunitário moderno para integrar moradores, serviços, oportunidades e melhorias urbanas com a mesma seriedade de um portal público municipal.</p>
+  <main class="home-page">
+    <section class="home-hero">
+      <div class="home-hero-content">
+        <div class="home-kicker">Portal comunitário municipal</div>
+        <h1>Bairro Conectado</h1>
+        <p>Uma plataforma digital para aproximar moradores, serviços, oportunidades, comércio local e melhorias urbanas em uma experiência simples, moderna e confiável.</p>
 
-      <div class="bc-home-actions">
-        <button class="bc-btn bc-btn-primary" data-auth-trigger>Acessar comunidade</button>
-        <a class="bc-btn bc-btn-secondary" href="/ocorrencias.html">Ver ocorrências</a>
+        <div class="home-actions">
+          <button class="home-btn primary" data-auth-trigger>Acessar comunidade</button>
+          <a class="home-btn secondary" href="/ocorrencias.html">Ver ocorrências</a>
+        </div>
       </div>
     </section>
 
-    <nav class="bc-home-subnav" aria-label="Áreas principais da página inicial">
-      <a href="#eventos">Eventos</a>
-      <a href="#empregos">Empregos</a>
-      <a href="#comercio">Comércio</a>
-      <a href="#projetos">Projetos</a>
-      <a href="#obras">Obras</a>
-    </nav>
+    <div class="home-internal-nav-wrap">
+      <nav class="home-internal-nav" aria-label="Menu interno da página inicial">
+        <a href="#eventos">Eventos</a>
+        <a href="#obras">Obras</a>
+        <a href="#comercio">Comércio</a>
+        <a href="#empregos">Empregos</a>
+        <a href="#projetos">Projetos</a>
+        <a href="#servicos">Serviços</a>
+      </nav>
+    </div>
 
-    <section id="eventos" class="bc-home-section">
-      <div class="bc-section-head">
-        <div>
-          <h2>Eventos da cidade</h2>
-          <p>Programação cultural, comunitária e social em destaque.</p>
+    <section id="eventos" class="home-section">
+      <div class="home-section-inner">
+        <div class="home-section-title">
+          <div>
+            <div class="home-section-tag">Agenda pública</div>
+            <h2>Eventos da cidade</h2>
+            <p>Programações, encontros e ações comunitárias organizadas para aproximar a população dos espaços públicos.</p>
+          </div>
         </div>
-      </div>
 
-      <div class="bc-carousel">
-        <div class="bc-carousel-track">
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Evento</span>
-              <h3>Festival cultural no centro da cidade</h3>
-              <p>Uma agenda especial com música, gastronomia, apresentações artísticas e espaço para pequenos empreendedores locais.</p>
-              <a href="#eventos">Saiba mais</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
+        <div class="home-carousel-block">
+          <div class="home-carousel">
+            <div class="home-carousel-track">
+              <article class="home-banner">
+                <div class="home-banner-copy">
+                  <span>Evento</span>
+                  <h3>Festival cultural no centro</h3>
+                  <p>Apresentações, gastronomia, atividades comunitárias e valorização dos talentos locais em um espaço aberto para toda a cidade.</p>
+                  <a href="#eventos">Ver programação</a>
+                </div>
+                <div class="home-banner-img" style="background-image:url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1400&q=80')"></div>
+              </article>
 
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Comunidade</span>
-              <h3>Feira de integração entre bairros</h3>
-              <p>Encontro para valorizar talentos locais, fortalecer laços sociais e ampliar a participação cidadã.</p>
-              <a href="#eventos">Explorar</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
+              <article class="home-banner">
+                <div class="home-banner-copy">
+                  <span>Comunidade</span>
+                  <h3>Feira de integração entre bairros</h3>
+                  <p>Uma ação voltada à convivência, ao empreendedorismo local e à participação cidadã.</p>
+                  <a href="#eventos">Conhecer evento</a>
+                </div>
+                <div class="home-banner-img" style="background-image:url('https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1400&q=80')"></div>
+              </article>
 
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Agenda</span>
-              <h3>Semana da juventude e inovação</h3>
-              <p>Oficinas, palestras e experiências voltadas ao desenvolvimento social, educacional e profissional da juventude.</p>
-              <a href="#eventos">Conferir agenda</a>
+              <article class="home-banner">
+                <div class="home-banner-copy">
+                  <span>Juventude</span>
+                  <h3>Semana de inovação e futuro</h3>
+                  <p>Oficinas, palestras e experiências para estudantes, jovens profissionais e moradores interessados em tecnologia e cidadania.</p>
+                  <a href="#eventos">Acompanhar</a>
+                </div>
+                <div class="home-banner-img" style="background-image:url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80')"></div>
+              </article>
             </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
+          </div>
+
+          <div class="home-carousel-footer">
+            <div class="home-carousel-buttons">
+              <button type="button" data-home-prev>‹</button>
+              <button type="button" data-home-next>›</button>
+            </div>
+            <div class="home-dots"></div>
+          </div>
         </div>
-      </div>
-
-      <div class="bc-carousel-controls">
-        <div class="bc-carousel-buttons">
-          <button type="button" data-carousel-prev>‹</button>
-          <button type="button" data-carousel-next>›</button>
-        </div>
-        <div class="bc-dots"></div>
       </div>
     </section>
 
-    <section id="empregos" class="bc-home-section">
-      <div class="bc-section-head">
-        <div>
-          <h2>Empregos e oportunidades</h2>
-          <p>Conectando moradores a vagas e desenvolvimento profissional.</p>
+    <section id="obras" class="home-section alt">
+      <div class="home-section-inner">
+        <div class="home-section-title">
+          <div>
+            <div class="home-section-tag">Infraestrutura</div>
+            <h2>Obras e melhorias urbanas</h2>
+            <p>Acompanhamento visual das intervenções que melhoram mobilidade, segurança e qualidade de vida.</p>
+          </div>
+        </div>
+
+        <div class="home-carousel-block">
+          <div class="home-carousel">
+            <div class="home-carousel-track">
+              <article class="home-banner">
+                <div class="home-banner-copy">
+                  <span>Obras</span>
+                  <h3>Modernização de vias públicas</h3>
+                  <p>Melhorias estruturais em ruas, avenidas e áreas de circulação para tornar a cidade mais segura e acessível.</p>
+                  <a href="#obras">Acompanhar</a>
+                </div>
+                <div class="home-banner-img" style="background-image:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1400&q=80')"></div>
+              </article>
+
+              <article class="home-banner">
+                <div class="home-banner-copy">
+                  <span>Mobilidade</span>
+                  <h3>Revitalização de espaços urbanos</h3>
+                  <p>Praças, calçadas e áreas de convivência recebendo atenção para melhorar o uso coletivo da cidade.</p>
+                  <a href="#obras">Ver detalhes</a>
+                </div>
+                <div class="home-banner-img" style="background-image:url('https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1400&q=80')"></div>
+              </article>
+
+              <article class="home-banner">
+                <div class="home-banner-copy">
+                  <span>Transparência</span>
+                  <h3>Acompanhamento de ações públicas</h3>
+                  <p>Informações organizadas para que a população acompanhe o impacto das melhorias no bairro.</p>
+                  <a href="#obras">Consultar</a>
+                </div>
+                <div class="home-banner-img" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=1400&q=80')"></div>
+              </article>
+            </div>
+          </div>
+
+          <div class="home-carousel-footer">
+            <div class="home-carousel-buttons">
+              <button type="button" data-home-prev>‹</button>
+              <button type="button" data-home-next>›</button>
+            </div>
+            <div class="home-dots"></div>
+          </div>
         </div>
       </div>
+    </section>
 
-      <div class="bc-carousel">
-        <div class="bc-carousel-track">
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
+    <section class="home-section">
+      <div class="home-section-inner">
+        <div class="home-section-title">
+          <div>
+            <div class="home-section-tag">Cidade conectada</div>
+            <h2>Serviços e informações para o morador</h2>
+            <p>Áreas principais do portal organizadas em cards claros, com leitura rápida e navegação objetiva.</p>
+          </div>
+        </div>
+
+        <div class="home-card-grid">
+          <article id="comercio" class="home-card">
+            <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=900&q=80" alt="Comércio local">
+            <div class="home-card-body">
+              <span>Comércio</span>
+              <h3>Comércio local</h3>
+              <p>Espaço para destacar lojas, serviços, empreendedores e oportunidades de consumo dentro da cidade.</p>
+              <a href="#comercio">Explorar comércio</a>
+            </div>
+          </article>
+
+          <article id="empregos" class="home-card">
+            <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80" alt="Empregos">
+            <div class="home-card-body">
               <span>Empregos</span>
-              <h3>Novas vagas em comércio e atendimento</h3>
-              <p>Empresas da cidade divulgam oportunidades para fortalecer o mercado local e gerar renda para a população.</p>
+              <h3>Vagas e oportunidades</h3>
+              <p>Divulgação de oportunidades, capacitações e caminhos para aproximar moradores do mercado de trabalho.</p>
               <a href="#empregos">Ver oportunidades</a>
             </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80')"></div>
           </article>
 
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Capacitação</span>
-              <h3>Programas de qualificação profissional</h3>
-              <p>Cursos e iniciativas pensados para ampliar a empregabilidade e apoiar o crescimento econômico da cidade.</p>
-              <a href="#empregos">Conhecer</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Juventude</span>
-              <h3>Oportunidades para primeiro emprego</h3>
-              <p>Espaço voltado para jovens que estão entrando no mercado de trabalho e buscam crescimento.</p>
-              <a href="#empregos">Acessar</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-        </div>
-      </div>
-
-      <div class="bc-carousel-controls">
-        <div class="bc-carousel-buttons">
-          <button type="button" data-carousel-prev>‹</button>
-          <button type="button" data-carousel-next>›</button>
-        </div>
-        <div class="bc-dots"></div>
-      </div>
-    </section>
-
-    <section id="comercio" class="bc-home-section">
-      <div class="bc-section-head">
-        <div>
-          <h2>Comércio local</h2>
-          <p>Valorização dos negócios, serviços e empreendedores da cidade.</p>
-        </div>
-      </div>
-
-      <div class="bc-carousel">
-        <div class="bc-carousel-track">
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Comércio</span>
-              <h3>Lojas e serviços próximos de você</h3>
-              <p>Uma vitrine moderna para fortalecer a economia local e aproximar a população dos estabelecimentos da região.</p>
-              <a href="#comercio">Explorar</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Negócios</span>
-              <h3>Parcerias e empreendedorismo urbano</h3>
-              <p>Ambiente pensado para destacar empresas, serviços e soluções que impulsionam o desenvolvimento da cidade.</p>
-              <a href="#comercio">Conhecer</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Economia</span>
-              <h3>Fortalecimento do comércio de bairro</h3>
-              <p>Mais visibilidade para pequenos empreendedores e mais praticidade para quem procura produtos e serviços.</p>
-              <a href="#comercio">Acessar</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-        </div>
-      </div>
-
-      <div class="bc-carousel-controls">
-        <div class="bc-carousel-buttons">
-          <button type="button" data-carousel-prev>‹</button>
-          <button type="button" data-carousel-next>›</button>
-        </div>
-        <div class="bc-dots"></div>
-      </div>
-    </section>
-
-    <section id="projetos" class="bc-home-section">
-      <div class="bc-section-head">
-        <div>
-          <h2>Projetos e iniciativas</h2>
-          <p>Ações que transformam a cidade e aproximam o cidadão das melhorias públicas.</p>
-        </div>
-      </div>
-
-      <div class="bc-carousel">
-        <div class="bc-carousel-track">
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
+          <article id="projetos" class="home-card">
+            <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80" alt="Projetos sociais">
+            <div class="home-card-body">
               <span>Projetos</span>
-              <h3>Projetos sociais e comunitários em destaque</h3>
-              <p>Informações acessíveis sobre ações relevantes para a qualidade de vida, educação e inclusão na cidade.</p>
-              <a href="#projetos">Ver projetos</a>
+              <h3>Projetos sociais</h3>
+              <p>Iniciativas comunitárias, ações públicas e projetos de impacto para melhoria da qualidade de vida.</p>
+              <a href="#projetos">Conhecer projetos</a>
             </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80')"></div>
           </article>
 
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Iniciativas</span>
-              <h3>Participação cidadã e impacto local</h3>
-              <p>Mais clareza e visibilidade para iniciativas que melhoram bairros, ruas e serviços comunitários.</p>
-              <a href="#projetos">Explorar</a>
+          <article id="servicos" class="home-card">
+            <img src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=900&q=80" alt="Serviços municipais">
+            <div class="home-card-body">
+              <span>Serviços</span>
+              <h3>Serviços ao cidadão</h3>
+              <p>Informações úteis, canais de apoio e serviços digitais para facilitar o contato com a comunidade.</p>
+              <a href="#servicos">Acessar serviços</a>
             </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Gestão</span>
-              <h3>Transparência e aproximação com a população</h3>
-              <p>Comunicação mais clara entre comunidade e iniciativas que impactam o dia a dia da cidade.</p>
-              <a href="#projetos">Acompanhar</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80')"></div>
           </article>
         </div>
-      </div>
 
-      <div class="bc-carousel-controls">
-        <div class="bc-carousel-buttons">
-          <button type="button" data-carousel-prev>‹</button>
-          <button type="button" data-carousel-next>›</button>
-        </div>
-        <div class="bc-dots"></div>
-      </div>
-    </section>
-
-    <section id="obras" class="bc-home-section">
-      <div class="bc-section-head">
-        <div>
-          <h2>Obras e infraestrutura</h2>
-          <p>Acompanhamento visual de melhorias urbanas e intervenções públicas.</p>
+        <div class="home-wide-cta">
+          <h2>Participe das melhorias do bairro</h2>
+          <p>Registre ocorrências com foto, vote nas prioridades e acompanhe o que a comunidade considera mais urgente.</p>
+          <a href="/ocorrencias.html">Ir para ocorrências</a>
         </div>
       </div>
-
-      <div class="bc-carousel">
-        <div class="bc-carousel-track">
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Obras</span>
-              <h3>Modernização da infraestrutura urbana</h3>
-              <p>Informações sobre intervenções que melhoram mobilidade, segurança e qualidade de vida na cidade.</p>
-              <a href="#obras">Acompanhar</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Mobilidade</span>
-              <h3>Melhorias em vias e espaços públicos</h3>
-              <p>Mais visibilidade para projetos de revitalização, manutenção e desenvolvimento urbano.</p>
-              <a href="#obras">Saiba mais</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-
-          <article class="bc-banner">
-            <div class="bc-banner-copy">
-              <span>Cidade</span>
-              <h3>Transparência nas melhorias estruturais</h3>
-              <p>Uma leitura clara para a sociedade acompanhar a evolução das obras e seus impactos positivos.</p>
-              <a href="#obras">Ver detalhes</a>
-            </div>
-            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=1200&q=80')"></div>
-          </article>
-        </div>
-      </div>
-
-      <div class="bc-carousel-controls">
-        <div class="bc-carousel-buttons">
-          <button type="button" data-carousel-prev>‹</button>
-          <button type="button" data-carousel-next>›</button>
-        </div>
-        <div class="bc-dots"></div>
-      </div>
-    </section>
-
-    <section class="bc-info-grid">
-      <article class="bc-info-box">
-        <h3>Portal institucional</h3>
-        <p>Visual profissional, leitura clara e estrutura pensada para uma cidade inteira utilizar com confiança.</p>
-      </article>
-
-      <article class="bc-info-box">
-        <h3>Participação social</h3>
-        <p>Ocorrências, votação e integração entre comunidade e gestão pública em um único ambiente.</p>
-      </article>
-
-      <article class="bc-info-box">
-        <h3>Identidade visual sólida</h3>
-        <p>Paleta unificada com branco, preto, verde e azul para reforçar credibilidade e modernidade.</p>
-      </article>
     </section>
   </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/menu-fix.js"></script>
-  <script src="/js/home-ui.js"></script>
+  <script src="/js/home-front.js"></script>
 </body>
 </html>
-
-
