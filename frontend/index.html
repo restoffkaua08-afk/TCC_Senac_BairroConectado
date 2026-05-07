@@ -2,158 +2,306 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Portal do Bairro - Conectando moradores, comércios e iniciativas locais. Acompanhe obras, projetos sociais, eventos e serviços da sua região.">
-  <title>Portal do Bairro | Comunidade Urbana</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Inter',sans-serif; background:#f9fafb; color:#1e293b; overflow-x:hidden; line-height:1.5; }
-    html { scroll-behavior:smooth; }
-    :root { --verde-principal:#2e7d32; --verde-escuro:#1b5e20; --azul-destaque:#1565c0; --azul-claro:#e3f2fd; --cinza-fundo:#f8fafc; --cinza-borda:#e2e8f0; --texto-escuro:#0f172a; --texto-suave:#475569; --shadow-card:0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -1px rgba(0,0,0,0.03); --shadow-hover:0 12px 20px -8px rgba(0,0,0,0.15); --transition:all 0.3s ease; }
-    header { position:fixed; top:0; left:0; width:100%; background:rgba(255,255,255,0.96); backdrop-filter:blur(12px); border-bottom:1px solid var(--cinza-borda); padding:16px 8%; display:flex; justify-content:space-between; align-items:center; z-index:1000; transition:var(--transition); }
-    header.scrolled { padding:10px 8%; box-shadow:0 2px 12px rgba(0,0,0,0.03); }
-    .logo { font-size:26px; font-weight:800; background:linear-gradient(135deg,var(--verde-principal),var(--azul-destaque)); -webkit-background-clip:text; background-clip:text; color:transparent; cursor:pointer; letter-spacing:-0.5px; }
-    nav { display:flex; gap:36px; }
-    nav a { text-decoration:none; font-weight:500; font-size:15px; color:var(--texto-escuro); transition:var(--transition); position:relative; }
-    nav a::after { content:''; position:absolute; bottom:-6px; left:0; width:0%; height:2px; background:linear-gradient(90deg,var(--verde-principal),var(--azul-destaque)); transition:width 0.25s ease; }
-    nav a:hover::after, nav a.active::after { width:100%; }
-    nav a.active { color:var(--verde-principal); font-weight:600; }
-    .btn-outline-header { background:transparent; border:1.5px solid var(--verde-principal); padding:8px 20px; border-radius:40px; font-weight:600; font-size:14px; color:var(--verde-principal); cursor:pointer; transition:var(--transition); }
-    .btn-outline-header:hover { background:var(--verde-principal); color:white; }
-    .hero { min-height:85vh; background:linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000'); background-size:cover; background-position:center 30%; display:flex; align-items:center; justify-content:center; text-align:center; padding:120px 8% 80px; }
-    .hero-content { max-width:800px; color:white; animation:fadeUp 0.8s ease-out; }
-    .hero-content h1 { font-size:3.3rem; font-weight:800; margin-bottom:20px; letter-spacing:-1px; }
-    .hero-content p { font-size:1.2rem; margin-bottom:32px; opacity:0.9; }
-    .hero-buttons { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
-    .btn-primary { background:var(--verde-principal); color:white; padding:12px 32px; border-radius:40px; font-weight:600; border:none; cursor:pointer; transition:var(--transition); }
-    .btn-primary:hover { background:var(--verde-escuro); transform:translateY(-3px); box-shadow:0 8px 18px rgba(46,125,50,0.3); }
-    .btn-secondary { background:transparent; border:1.5px solid white; color:white; padding:12px 32px; border-radius:40px; font-weight:600; cursor:pointer; transition:var(--transition); }
-    .btn-secondary:hover { background:white; color:var(--verde-principal); transform:translateY(-3px); }
-    section { padding:80px 8%; }
-    .section-header { text-align:center; max-width:700px; margin:0 auto 48px; }
-    .section-badge { display:inline-block; background:var(--azul-claro); color:var(--azul-destaque); font-size:13px; font-weight:600; padding:6px 16px; border-radius:40px; margin-bottom:16px; }
-    .section-title { font-size:2.2rem; font-weight:800; color:var(--texto-escuro); margin-bottom:16px; }
-    .section-sub { color:var(--texto-suave); font-size:1.05rem; }
-    .comercios-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:32px; margin-top:24px; }
-    .card-comercio { background:white; border-radius:24px; overflow:hidden; box-shadow:var(--shadow-card); transition:var(--transition); border:1px solid var(--cinza-borda); }
-    .card-comercio:hover { transform:translateY(-6px); box-shadow:var(--shadow-hover); }
-    .card-img { width:100%; height:200px; object-fit:cover; }
-    .card-info { padding:24px; }
-    .card-info h3 { font-size:1.5rem; margin-bottom:8px; }
-    .card-info p { color:var(--texto-suave); margin-bottom:12px; line-height:1.4; }
-    .horario { font-size:0.85rem; font-weight:500; color:var(--verde-principal); margin-bottom:20px; display:flex; align-items:center; gap:6px; }
-    .btn-ver-mais { background:none; border:1px solid var(--cinza-borda); padding:8px 20px; border-radius:30px; font-weight:500; color:var(--texto-escuro); cursor:pointer; transition:0.2s; }
-    .btn-ver-mais:hover { background:var(--verde-principal); border-color:var(--verde-principal); color:white; }
-    .carrossel-container { position:relative; margin:32px 0 20px; }
-    .carrossel { display:flex; overflow-x:auto; scroll-behavior:smooth; gap:24px; padding:8px 4px 24px; scrollbar-width:thin; }
-    .carrossel::-webkit-scrollbar { height:6px; }
-    .carrossel::-webkit-scrollbar-track { background:var(--cinza-borda); border-radius:10px; }
-    .carrossel::-webkit-scrollbar-thumb { background:var(--verde-principal); border-radius:10px; }
-    .card-carrossel { min-width:280px; background:white; border-radius:20px; overflow:hidden; box-shadow:var(--shadow-card); flex-shrink:0; transition:0.2s; }
-    .card-carrossel img { width:100%; height:180px; object-fit:cover; }
-    .card-carrossel .info { padding:18px; }
-    .card-carrossel h4 { font-size:1.2rem; margin-bottom:6px; }
-    .card-carrossel p { color:var(--texto-suave); font-size:0.9rem; }
-    .carrossel-btn { position:absolute; top:40%; transform:translateY(-50%); background:white; border:1px solid var(--cinza-borda); border-radius:50%; width:44px; height:44px; cursor:pointer; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,0.1); transition:0.2s; }
-    .carrossel-btn:hover { background:var(--verde-principal); color:white; border-color:var(--verde-principal); }
-    .btn-left { left:-20px; }
-    .btn-right { right:-20px; }
-    .grid-3col { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:30px; }
-    .card-evento { background:white; border-radius:24px; padding:28px; text-align:center; box-shadow:var(--shadow-card); transition:var(--transition); border:1px solid var(--cinza-borda); }
-    .card-evento:hover { transform:translateY(-5px); }
-    .card-evento i { font-size:2.8rem; color:var(--azul-destaque); margin-bottom:20px; }
-    .card-evento h3 { font-size:1.4rem; margin-bottom:12px; }
-    .tag { display:inline-block; margin-top:16px; background:#eef2ff; padding:5px 14px; border-radius:30px; font-size:13px; font-weight:500; color:var(--azul-destaque); }
-    .mapa-section { padding:0 8% 80px; }
-    .mapa-wrapper { border-radius:28px; overflow:hidden; box-shadow:var(--shadow-hover); border:1px solid var(--cinza-borda); }
-    iframe { width:100%; height:400px; display:block; }
-    .fade-up { opacity:0; transform:translateY(30px); transition:opacity 0.7s ease,transform 0.7s ease; }
-    .fade-up.show { opacity:1; transform:translateY(0); }
-    footer { background:#1e293b; color:#cbd5e1; padding:48px 8% 24px; margin-top:40px; }
-    .footer-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:40px; margin-bottom:40px; }
-    .footer-col h4 { color:white; margin-bottom:18px; }
-    .footer-col a { display:block; color:#cbd5e1; text-decoration:none; margin-bottom:10px; font-size:14px; transition:0.2s; }
-    .footer-col a:hover { color:var(--verde-principal); }
-    .footer-bottom { text-align:center; padding-top:24px; border-top:1px solid #334155; font-size:13px; }
-    @media (max-width:768px) { nav { display:none; } .hero-content h1 { font-size:2.2rem; } .section-title { font-size:1.8rem; } .carrossel-btn { display:none; } }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bairro Conectado</title>
+  <link rel="stylesheet" href="/css/site-theme.css">
 </head>
 <body>
-<header id="header"><div class="logo" id="logoHome">🏘️ Portal do Bairro</div><nav id="mainNav"><a data-section="home" class="active">Início</a><a data-section="comercios">Comércios</a><a data-section="obras">Obras</a><a data-section="projetos">Projetos Sociais</a><a data-section="eventos">Eventos</a><a data-section="servicos">Serviços</a></nav><button class="btn-outline-header" id="btnAcessar">Acessar comunidade</button></header>
-<main>
-  <section id="home" class="hero"><div class="hero-content"><h1>Conectando moradores, comércios e iniciativas do bairro</h1><p>Acompanhe obras, projetos sociais, eventos e fortaleça a economia local. Seu portal de transformação urbana.</p><div class="hero-buttons"><button class="btn-primary" id="btnExplorarComercios">Explorar comércios →</button><button class="btn-secondary" id="btnVerEventos">Ver eventos</button></div></div></section>
-  <section id="comercios-section" class="fade-up"><div class="section-header"><div class="section-badge">Apoie o bairro</div><h2 class="section-title">Comércios parceiros</h2><p class="section-sub">Estabelecimentos que fazem a diferença no dia a dia da comunidade</p></div><div class="comercios-grid" id="comerciosGrid"></div></section>
-  <section id="obras-section" class="fade-up"><div class="section-header"><div class="section-badge">Melhorias urbanas</div><h2 class="section-title">Obras em andamento</h2><p class="section-sub">Acompanhe a transformação do nosso bairro</p></div><div class="carrossel-container"><button class="carrossel-btn btn-left obras-left"><i class="fas fa-chevron-left"></i></button><div class="carrossel" id="carrosselObras"></div><button class="carrossel-btn btn-right obras-right"><i class="fas fa-chevron-right"></i></button></div></section>
-  <section id="projetos-section" class="fade-up"><div class="section-header"><div class="section-badge">Transformação social</div><h2 class="section-title">Projetos sociais</h2><p class="section-sub">Iniciativas que aproximam e acolhem os moradores</p></div><div class="carrossel-container"><button class="carrossel-btn btn-left projetos-left"><i class="fas fa-chevron-left"></i></button><div class="carrossel" id="carrosselProjetos"></div><button class="carrossel-btn btn-right projetos-right"><i class="fas fa-chevron-right"></i></button></div></section>
-  <section id="eventos-section" class="fade-up"><div class="section-header"><div class="section-badge">Agenda comunitária</div><h2 class="section-title">Próximos eventos</h2></div><div class="grid-3col"><div class="card-evento"><i class="fas fa-music"></i><h3>Festa da Primavera</h3><p>Música ao vivo, comidas típicas e feira de artesanato. Praça Central.</p><div class="tag">15/11 - 16h</div></div><div class="card-evento"><i class="fas fa-futbol"></i><h3>Campeonato de Futebol</h3><p>Times do bairro se enfrentam no campo society. Inscrições abertas.</p><div class="tag">20/11 a 15/12</div></div><div class="card-evento"><i class="fas fa-hand-holding-heart"></i><h3>Bazar Solidário</h3><p>Arrecadação de roupas e alimentos. Venha doar e colaborar.</p><div class="tag">Todo sábado</div></div></div></section>
-  <section id="servicos-section" class="fade-up"><div class="section-header"><div class="section-badge">Cuidado com a cidade</div><h2 class="section-title">Serviços disponíveis</h2></div><div class="grid-3col"><div class="card-evento"><i class="fas fa-hospital-user"></i><h3>Posto de Saúde</h3><p>Atendimento básico, vacinação e enfermagem. Horário ampliado.</p><div class="tag">Seg-Sex 7h-19h</div></div><div class="card-evento"><i class="fas fa-chalkboard-user"></i><h3>Escola Municipal</h3><p>Ensino infantil e fundamental, atividades extracurriculares.</p><div class="tag">Matrículas abertas</div></div><div class="card-evento"><i class="fas fa-shield-alt"></i><h3>Ronda Comunitária</h3><p>Segurança integrada com participação dos moradores.</p><div class="tag">24h / Disque 153</div></div></div></section>
-  <div class="mapa-section fade-up"><div class="section-header"><div class="section-badge">Onde estamos</div><h2 class="section-title">Localização do bairro</h2><p class="section-sub">Referência para comércios, eventos e serviços</p></div><div class="mapa-wrapper"><iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.197452500086!2d-46.65313068447691!3d-23.561458484681633!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0xd59f9431f2c9776a!2sAv.%20Paulista%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1645123456789!5m2!1spt-BR!2sbr" allowfullscreen="" loading="lazy"></iframe></div></div>
-</main>
-<footer><div class="footer-grid"><div class="footer-col"><h4>Portal do Bairro</h4><a>Quem somos</a><a>Transparência</a><a>Parcerias</a></div><div class="footer-col"><h4>Serviços</h4><a>Comércios locais</a><a>Projetos sociais</a><a>Agenda de obras</a></div><div class="footer-col"><h4>Contato</h4><a>ouvidoria@portaldobairro.com</a><a>Telefone: (11) 3000-0000</a></div></div><div class="footer-bottom">© 2026 Portal do Bairro – União e desenvolvimento comunitário.</div></footer>
+  <main class="bc-home-shell">
+    <section class="bc-home-hero">
+      <h1>Bairro Conectado</h1>
+      <p>Um portal comunitário moderno para integrar moradores, serviços, oportunidades e melhorias urbanas com a mesma seriedade de um portal público municipal.</p>
 
-<script>
-  // Dados estáticos (mesmo do seu original)
-  const comercios = [
-    { nome: "Padaria do Zé", desc: "Pães artesanais e café da manhã especial", horario: "06h - 20h", img: "https://picsum.photos/id/292/400/250" },
-    { nome: "Mercado Central", desc: "Frutas, verduras e açougue de qualidade", horario: "8h - 22h", img: "https://picsum.photos/id/283/400/250" },
-    { nome: "Farmácia Saúde", desc: "Atendimento humanizado 24h", horario: "24 horas", img: "https://picsum.photos/id/158/400/250" },
-    { nome: "Pet & Cia", desc: "Banho, tosa e produtos para pets", horario: "9h - 18h", img: "https://picsum.photos/id/128/400/250" },
-    { nome: "Academia Corpo Ativo", desc: "Musculação, aulas coletivas", horario: "6h - 23h", img: "https://picsum.photos/id/20/400/250" },
-    { nome: "Lavanderia Express", desc: "Lavagem e secagem rápida", horario: "8h - 20h", img: "https://picsum.photos/id/143/400/250" }
-  ];
-  const obras = [
-    { titulo: "Reforma da Praça Central", desc: "Novos bancos, paisagismo e playground", img: "https://picsum.photos/id/96/400/250" },
-    { titulo: "Pavimentação da Rua das Flores", desc: "Asfalto novo e sinalização", img: "https://picsum.photos/id/58/400/250" },
-    { titulo: "Iluminação em LED", desc: "Troca de lâmpadas em todo o bairro", img: "https://picsum.photos/id/91/400/250" },
-    { titulo: "Nova ciclovia", desc: "Liga o parque ao centro comercial", img: "https://picsum.photos/id/17/400/250" }
-  ];
-  const projetosSociais = [
-    { titulo: "Música na Comunidade", desc: "Aulas gratuitas de violão e percussão", img: "https://picsum.photos/id/29/400/250" },
-    { titulo: "Horta Coletiva", desc: "Cultivo sustentável de hortaliças", img: "https://picsum.photos/id/127/400/250" },
-    { titulo: "Inclusão Digital", desc: "Cursos de informática para idosos", img: "https://picsum.photos/id/0/400/250" },
-    { titulo: "Recicla Bairro", desc: "Coleta seletiva e troca por brindes", img: "https://picsum.photos/id/221/400/250" }
-  ];
-  function renderComercios() {
-    const container = document.getElementById('comerciosGrid');
-    if(!container) return;
-    container.innerHTML = comercios.map(c => '<div class="card-comercio"><img class="card-img" src="'+c.img+'"><div class="card-info"><h3>'+c.nome+'</h3><p>'+c.desc+'</p><div class="horario"><i class="far fa-clock"></i> '+c.horario+'</div><button class="btn-ver-mais" data-nome="'+c.nome+'">Ver mais →</button></div></div>').join('');
-    document.querySelectorAll('.btn-ver-mais').forEach(btn => btn.addEventListener('click', () => alert('Em breve mais informações sobre '+btn.dataset.nome)));
-  }
-  function preencherCarrossel(id, itens) {
-    const div = document.getElementById(id);
-    if(div) div.innerHTML = itens.map(i => '<div class="card-carrossel"><img src="'+i.img+'"><div class="info"><h4>'+i.titulo+'</h4><p>'+i.desc+'</p></div></div>').join('');
-  }
-  function setupCarrossel(containerId, leftClass, rightClass) {
-    const cont = document.getElementById(containerId);
-    const left = document.querySelector('.'+leftClass);
-    const right = document.querySelector('.'+rightClass);
-    if(left && right && cont) {
-      left.onclick = () => cont.scrollBy({ left: -300, behavior: 'smooth' });
-      right.onclick = () => cont.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  }
-  renderComercios();
-  preencherCarrossel('carrosselObras', obras);
-  preencherCarrossel('carrosselProjetos', projetosSociais);
-  setupCarrossel('carrosselObras', 'obras-left', 'obras-right');
-  setupCarrossel('carrosselProjetos', 'projetos-left', 'projetos-right');
-  const fadeElements = document.querySelectorAll('.fade-up');
-  const observer = new IntersectionObserver(entries => entries.forEach(e => e.isIntersecting && e.target.classList.add('show')), { threshold:0.15 });
-  fadeElements.forEach(el => observer.observe(el));
-  window.addEventListener('scroll', () => {
-    const header = document.getElementById('header');
-    if(window.scrollY > 50) header.classList.add('scrolled');
-    else header.classList.remove('scrolled');
-  });
-  document.getElementById('btnExplorarComercios')?.addEventListener('click', () => document.getElementById('comercios-section').scrollIntoView({ behavior:'smooth' }));
-  document.getElementById('btnVerEventos')?.addEventListener('click', () => document.getElementById('eventos-section').scrollIntoView({ behavior:'smooth' }));
-  document.getElementById('logoHome')?.addEventListener('click', () => document.getElementById('home').scrollIntoView({ behavior:'smooth' }));
-</script>
-<script src="/js/api.js"></script>
+      <div class="bc-home-actions">
+        <button class="bc-btn bc-btn-primary" data-auth-trigger>Acessar comunidade</button>
+        <a class="bc-btn bc-btn-secondary" href="/ocorrencias.html">Ver ocorrências</a>
+      </div>
+    </section>
+
+    <nav class="bc-home-subnav" aria-label="Áreas principais da página inicial">
+      <a href="#eventos">Eventos</a>
+      <a href="#empregos">Empregos</a>
+      <a href="#comercio">Comércio</a>
+      <a href="#projetos">Projetos</a>
+      <a href="#obras">Obras</a>
+    </nav>
+
+    <section id="eventos" class="bc-home-section">
+      <div class="bc-section-head">
+        <div>
+          <h2>Eventos da cidade</h2>
+          <p>Programação cultural, comunitária e social em destaque.</p>
+        </div>
+      </div>
+
+      <div class="bc-carousel">
+        <div class="bc-carousel-track">
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Evento</span>
+              <h3>Festival cultural no centro da cidade</h3>
+              <p>Uma agenda especial com música, gastronomia, apresentações artísticas e espaço para pequenos empreendedores locais.</p>
+              <a href="#eventos">Saiba mais</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Comunidade</span>
+              <h3>Feira de integração entre bairros</h3>
+              <p>Encontro para valorizar talentos locais, fortalecer laços sociais e ampliar a participação cidadã.</p>
+              <a href="#eventos">Explorar</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Agenda</span>
+              <h3>Semana da juventude e inovação</h3>
+              <p>Oficinas, palestras e experiências voltadas ao desenvolvimento social, educacional e profissional da juventude.</p>
+              <a href="#eventos">Conferir agenda</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="bc-carousel-controls">
+        <div class="bc-carousel-buttons">
+          <button type="button" data-carousel-prev>‹</button>
+          <button type="button" data-carousel-next>›</button>
+        </div>
+        <div class="bc-dots"></div>
+      </div>
+    </section>
+
+    <section id="empregos" class="bc-home-section">
+      <div class="bc-section-head">
+        <div>
+          <h2>Empregos e oportunidades</h2>
+          <p>Conectando moradores a vagas e desenvolvimento profissional.</p>
+        </div>
+      </div>
+
+      <div class="bc-carousel">
+        <div class="bc-carousel-track">
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Empregos</span>
+              <h3>Novas vagas em comércio e atendimento</h3>
+              <p>Empresas da cidade divulgam oportunidades para fortalecer o mercado local e gerar renda para a população.</p>
+              <a href="#empregos">Ver oportunidades</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Capacitação</span>
+              <h3>Programas de qualificação profissional</h3>
+              <p>Cursos e iniciativas pensados para ampliar a empregabilidade e apoiar o crescimento econômico da cidade.</p>
+              <a href="#empregos">Conhecer</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Juventude</span>
+              <h3>Oportunidades para primeiro emprego</h3>
+              <p>Espaço voltado para jovens que estão entrando no mercado de trabalho e buscam crescimento.</p>
+              <a href="#empregos">Acessar</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="bc-carousel-controls">
+        <div class="bc-carousel-buttons">
+          <button type="button" data-carousel-prev>‹</button>
+          <button type="button" data-carousel-next>›</button>
+        </div>
+        <div class="bc-dots"></div>
+      </div>
+    </section>
+
+    <section id="comercio" class="bc-home-section">
+      <div class="bc-section-head">
+        <div>
+          <h2>Comércio local</h2>
+          <p>Valorização dos negócios, serviços e empreendedores da cidade.</p>
+        </div>
+      </div>
+
+      <div class="bc-carousel">
+        <div class="bc-carousel-track">
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Comércio</span>
+              <h3>Lojas e serviços próximos de você</h3>
+              <p>Uma vitrine moderna para fortalecer a economia local e aproximar a população dos estabelecimentos da região.</p>
+              <a href="#comercio">Explorar</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Negócios</span>
+              <h3>Parcerias e empreendedorismo urbano</h3>
+              <p>Ambiente pensado para destacar empresas, serviços e soluções que impulsionam o desenvolvimento da cidade.</p>
+              <a href="#comercio">Conhecer</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1556740749-887f6717d7e4?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Economia</span>
+              <h3>Fortalecimento do comércio de bairro</h3>
+              <p>Mais visibilidade para pequenos empreendedores e mais praticidade para quem procura produtos e serviços.</p>
+              <a href="#comercio">Acessar</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="bc-carousel-controls">
+        <div class="bc-carousel-buttons">
+          <button type="button" data-carousel-prev>‹</button>
+          <button type="button" data-carousel-next>›</button>
+        </div>
+        <div class="bc-dots"></div>
+      </div>
+    </section>
+
+    <section id="projetos" class="bc-home-section">
+      <div class="bc-section-head">
+        <div>
+          <h2>Projetos e iniciativas</h2>
+          <p>Ações que transformam a cidade e aproximam o cidadão das melhorias públicas.</p>
+        </div>
+      </div>
+
+      <div class="bc-carousel">
+        <div class="bc-carousel-track">
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Projetos</span>
+              <h3>Projetos sociais e comunitários em destaque</h3>
+              <p>Informações acessíveis sobre ações relevantes para a qualidade de vida, educação e inclusão na cidade.</p>
+              <a href="#projetos">Ver projetos</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Iniciativas</span>
+              <h3>Participação cidadã e impacto local</h3>
+              <p>Mais clareza e visibilidade para iniciativas que melhoram bairros, ruas e serviços comunitários.</p>
+              <a href="#projetos">Explorar</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Gestão</span>
+              <h3>Transparência e aproximação com a população</h3>
+              <p>Comunicação mais clara entre comunidade e iniciativas que impactam o dia a dia da cidade.</p>
+              <a href="#projetos">Acompanhar</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="bc-carousel-controls">
+        <div class="bc-carousel-buttons">
+          <button type="button" data-carousel-prev>‹</button>
+          <button type="button" data-carousel-next>›</button>
+        </div>
+        <div class="bc-dots"></div>
+      </div>
+    </section>
+
+    <section id="obras" class="bc-home-section">
+      <div class="bc-section-head">
+        <div>
+          <h2>Obras e infraestrutura</h2>
+          <p>Acompanhamento visual de melhorias urbanas e intervenções públicas.</p>
+        </div>
+      </div>
+
+      <div class="bc-carousel">
+        <div class="bc-carousel-track">
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Obras</span>
+              <h3>Modernização da infraestrutura urbana</h3>
+              <p>Informações sobre intervenções que melhoram mobilidade, segurança e qualidade de vida na cidade.</p>
+              <a href="#obras">Acompanhar</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Mobilidade</span>
+              <h3>Melhorias em vias e espaços públicos</h3>
+              <p>Mais visibilidade para projetos de revitalização, manutenção e desenvolvimento urbano.</p>
+              <a href="#obras">Saiba mais</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+
+          <article class="bc-banner">
+            <div class="bc-banner-copy">
+              <span>Cidade</span>
+              <h3>Transparência nas melhorias estruturais</h3>
+              <p>Uma leitura clara para a sociedade acompanhar a evolução das obras e seus impactos positivos.</p>
+              <a href="#obras">Ver detalhes</a>
+            </div>
+            <div class="bc-banner-media" style="background-image:url('https://images.unsplash.com/photo-1513828583688-c52646db42da?auto=format&fit=crop&w=1200&q=80')"></div>
+          </article>
+        </div>
+      </div>
+
+      <div class="bc-carousel-controls">
+        <div class="bc-carousel-buttons">
+          <button type="button" data-carousel-prev>‹</button>
+          <button type="button" data-carousel-next>›</button>
+        </div>
+        <div class="bc-dots"></div>
+      </div>
+    </section>
+
+    <section class="bc-info-grid">
+      <article class="bc-info-box">
+        <h3>Portal institucional</h3>
+        <p>Visual profissional, leitura clara e estrutura pensada para uma cidade inteira utilizar com confiança.</p>
+      </article>
+
+      <article class="bc-info-box">
+        <h3>Participação social</h3>
+        <p>Ocorrências, votação e integração entre comunidade e gestão pública em um único ambiente.</p>
+      </article>
+
+      <article class="bc-info-box">
+        <h3>Identidade visual sólida</h3>
+        <p>Paleta unificada com branco, preto, verde e azul para reforçar credibilidade e modernidade.</p>
+      </article>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
   <script src="/js/menu-fix.js"></script>
+  <script src="/js/home-ui.js"></script>
 </body>
 </html>
 
