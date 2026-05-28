@@ -1,161 +1,52 @@
 ﻿require("dotenv").config();
 
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
-const fs = require("fs");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Datastore = require("@seald-io/nedb");
+const sql = require("mssql/msnodesqlv8");
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "bairro-conectado-secret-dev";
+const ADMIN_KEY = process.env.ADMIN_KEY || "bairro-admin-2026";
+const DB_CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
+
+if (!DB_CONNECTION_STRING) {
+  console.error("DB_CONNECTION_STRING não configurada no .env.");
+  process.exit(1);
+}
+
 const frontendDir = path.join(__dirname, "..", "frontend");
-const dbDir = path.join(__dirname, "..", "database.db");
-
-fs.mkdirSync(dbDir, { recursive: true });
-
-const users = new Datastore({
-  filename: path.join(dbDir, "users.db"),
-  autoload: true
-});
-
-const ocorrencias = new Datastore({
-  filename: path.join(dbDir, "ocorrencias.db"),
-  autoload: true
-});
-
-users.ensureIndex({ fieldName: "email", unique: true }, () => {});
-ocorrencias.ensureIndex({ fieldName: "createdAt" }, () => {});
-ocorrencias.ensureIndex({ fieldName: "prioridadeScore" }, () => {});
 
 app.use(cors());
-app.use(express.json({ limit: "25mb" }));
-app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-function one(db, query) {
-  return new Promise((resolve, reject) => {
-    db.findOne(query, (err, doc) => err ? reject(err) : resolve(doc));
-  });
-}
+let pool;
 
-function many(db, query = {}, sort = null) {
-  return new Promise((resolve, reject) => {
-    let cursor = db.find(query);
-    if (sort) cursor = cursor.sort(sort);
-    cursor.exec((err, docs) => err ? reject(err) : resolve(docs));
-  });
-}
+async function getPool() {
+  if (pool && pool.connected) return pool;
 
-function insert(db, doc) {
-  return new Promise((resolve, reject) => {
-    db.insert(doc, (err, newDoc) => err ? reject(err) : resolve(newDoc));
-  });
-}
+  pool = await new sql.ConnectionPool({
+    connectionString: DB_CONNECTION_STRING
+  }).connect();
 
-function update(db, query, data, options = {}) {
-  return new Promise((resolve, reject) => {
-    db.update(query, data, options, (err, affected) => err ? reject(err) : resolve(affected));
-  });
-}
-
-function count(db, query = {}) {
-  return new Promise((resolve, reject) => {
-    db.count(query, (err, total) => err ? reject(err) : resolve(total));
-  });
-}
-
-function cleanText(value) {
-  return String(value || "").trim();
-}
-
-function cleanEmail(value) {
-  return cleanText(value).toLowerCase();
-}
-
-function defaultOccurrenceImage(title = "Ocorrência") {
-  const safeTitle = String(title).replace(/[<>&'"]/g, "");
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
-    <defs>
-      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-        <stop offset="0%" stop-color="#0f172a"/>
-        <stop offset="100%" stop-color="#2563eb"/>
-      </linearGradient>
-    </defs>
-    <rect width="900" height="520" fill="url(#g)"/>
-    <circle cx="720" cy="110" r="120" fill="rgba(255,255,255,.12)"/>
-    <circle cx="120" cy="420" r="160" fill="rgba(255,255,255,.10)"/>
-    <text x="70" y="230" fill="#ffffff" font-size="54" font-family="Arial" font-weight="800">Bairro Conectado</text>
-    <text x="70" y="305" fill="#dbeafe" font-size="32" font-family="Arial">${safeTitle}</text>
-  </svg>`;
-
-  return "data:image/svg+xml;base64," + Buffer.from(svg).toString("base64");
-}
-
-function userSafe(user) {
-  return {
-    id: user._id,
-    _id: user._id,
-    nome: user.nome || "",
-    email: user.email || "",
-    telefone: user.telefone || "",
-    endereco: user.endereco || "",
-    foto: user.foto || "",
-    createdAt: user.createdAt || "",
-    updatedAt: user.updatedAt || ""
-  };
-}
-
-function tokenFor(user) {
-  return jwt.sign(
-    { id: user._id, email: user.email },
-    JWT_SECRET,
-    { expiresIn: "7d" }
-  );
-}
-
-async function auth(req, res, next) {
-  try {
-    const header = req.headers.authorization || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-
-    if (!token) {
-      return res.status(401).json({ message: "Faça login para continuar." });
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await one(users, { _id: decoded.id });
-
-    if (!user) {
-      return res.status(401).json({ message: "Usuário não encontrado." });
-    }
-
-    req.user = user;
-    next();
-  } catch {
-    res.status(401).json({ message: "Sessão inválida ou expirada." });
-  }
+  return pool;
 }
 
 function asyncRoute(fn) {
-  return async (req, res) => {
-    try {
-      await fn(req, res);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({
-        message: "Erro interno do servidor.",
-        detail: err.message
-      });
-    }
-  };
+  return (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
+}
+
+function cleanText(value) {
+  return String(value ?? "").trim();
 }
 
 function score(priority) {
-  const value = String(priority || "media").toLowerCase();
+  const value = cleanText(priority).toLowerCase();
 
   if (value === "baixa") return 1;
   if (value === "media" || value === "média") return 2;
@@ -172,163 +63,175 @@ function priorityFromScore(value) {
   return "baixa";
 }
 
-function occurrenceSafe(item) {
-  const votos = item.votos || {};
-  const values = Object.values(votos).map(score);
-  const base = item.prioridadeScore || score(item.prioridade);
-  const average = values.length ? values.reduce((a, b) => a + b, 0) / values.length : base;
+function createToken(user) {
+  return jwt.sign(
+    {
+      id: user.Id,
+      email: user.Email,
+      nome: user.Nome
+    },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
+function userSafe(user) {
+  if (!user) return null;
 
   return {
-    ...item,
-    id: item._id,
-    foto: item.foto || item.imagem || defaultOccurrenceImage(item.titulo),
-    imagem: item.foto || item.imagem || defaultOccurrenceImage(item.titulo),
-    prioridadeScore: Number(average.toFixed(2)),
-    prioridade: priorityFromScore(average),
-    totalVotos: values.length
+    id: String(user.Id),
+    nome: user.Nome || "",
+    email: user.Email || "",
+    telefone: user.Telefone || "",
+    endereco: user.Endereco || "",
+    foto: user.Foto || ""
   };
 }
 
-async function seed() {
-  const total = await count(ocorrencias);
-  if (total > 0) {
-    const docs = await many(ocorrencias, {});
-    for (const item of docs) {
-      if (!item.foto && !item.imagem) {
-        await update(ocorrencias, { _id: item._id }, {
-          $set: {
-            foto: defaultOccurrenceImage(item.titulo),
-            imagem: defaultOccurrenceImage(item.titulo),
-            updatedAt: new Date().toISOString()
-          }
-        });
-      }
+function occurrenceSafe(item) {
+  if (!item) return null;
+
+  return {
+    id: String(item.Id),
+    _id: String(item.Id),
+    titulo: item.Titulo || "",
+    descricao: item.Descricao || "",
+    categoria: item.Categoria || "Geral",
+    bairro: item.Bairro || "",
+    endereco: item.Endereco || "",
+    foto: item.Foto || item.Imagem || "",
+    imagem: item.Imagem || item.Foto || "",
+    status: item.Status || "pendente",
+    adminStatus: item.AdminStatus || "",
+    prioridade: item.Prioridade || "media",
+    prioridadeScore: Number(item.PrioridadeScore || 2),
+    totalVotos: Number(item.TotalVotos || 0),
+    createdByName: item.CreatedByName || "Sistema",
+    createdAt: item.CreatedAt,
+    updatedAt: item.UpdatedAt,
+    rejectionReason: item.RejectionReason || ""
+  };
+}
+
+async function auth(req, res, next) {
+  try {
+    const header = req.headers.authorization || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+
+    if (!token) {
+      return res.status(401).json({ message: "Sessão inválida ou expirada." });
     }
-    return;
-  }
 
-  const now = new Date().toISOString();
+    const payload = jwt.verify(token, JWT_SECRET);
+    const db = await getPool();
 
-  const dados = [
-    {
-      titulo: "Buraco na rua principal",
-      descricao: "Buraco grande atrapalhando o trânsito e oferecendo risco para moradores, motos e carros.",
-      categoria: "Infraestrutura",
-      bairro: "Centro",
-      endereco: "Rua Principal",
-      status: "aberta",
-      prioridade: "alta",
-      prioridadeScore: 3
-    },
-    {
-      titulo: "Poste sem iluminação",
-      descricao: "Rua escura durante a noite por falha na iluminação pública.",
-      categoria: "Iluminação",
-      bairro: "Residencial",
-      endereco: "Avenida das Flores",
-      status: "aberta",
-      prioridade: "media",
-      prioridadeScore: 2
-    },
-    {
-      titulo: "Acúmulo de lixo",
-      descricao: "Descarte irregular de lixo gerando mau cheiro e risco sanitário.",
-      categoria: "Limpeza urbana",
-      bairro: "Vila Nova",
-      endereco: "Rua das Palmeiras",
-      status: "aberta",
-      prioridade: "urgente",
-      prioridadeScore: 4
+    const result = await db.request()
+      .input("id", sql.Int, Number(payload.id))
+      .query("SELECT TOP 1 * FROM dbo.Usuarios WHERE Id = @id;");
+
+    if (!result.recordset.length) {
+      return res.status(401).json({ message: "Sessão inválida ou expirada." });
     }
-  ];
 
-  for (const item of dados) {
-    await insert(ocorrencias, {
-      ...item,
-      foto: defaultOccurrenceImage(item.titulo),
-      imagem: defaultOccurrenceImage(item.titulo),
-      votos: {},
-      createdAt: now,
-      updatedAt: now
-    });
+    req.user = result.recordset[0];
+    next();
+  } catch {
+    return res.status(401).json({ message: "Sessão inválida ou expirada." });
   }
 }
 
-app.get("/api/health", (req, res) => {
+function adminAuth(req, res, next) {
+  const key =
+    req.headers["x-admin-key"] ||
+    req.body.adminKey ||
+    req.query.adminKey ||
+    "";
+
+  if (!key || key !== ADMIN_KEY) {
+    return res.status(401).json({
+      message: "Acesso administrativo não autorizado."
+    });
+  }
+
+  next();
+}
+
+app.get("/api/health", asyncRoute(async (req, res) => {
+  const db = await getPool();
+  await db.request().query("SELECT 1 AS Ok;");
+
   res.json({
     ok: true,
-    sistema: "Bairro Conectado",
-    backend: "Node.js + Express",
-    banco: "NeDB",
-    status: "Funcionando",
-    url: `http://localhost:${PORT}`
+    database: "sqlserver",
+    message: "Backend conectado ao SQL Server."
   });
-});
+}));
 
 app.post("/api/auth/register", asyncRoute(async (req, res) => {
   const nome = cleanText(req.body.nome);
-  const email = cleanEmail(req.body.email);
-  const senha = cleanText(req.body.senha || req.body.password);
-  const foto = cleanText(req.body.foto);
+  const email = cleanText(req.body.email).toLowerCase();
+  const senha = cleanText(req.body.senha);
 
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ message: "Nome, email e senha são obrigatórios." });
+  if (!nome || !email || senha.length < 6) {
+    return res.status(400).json({
+      message: "Nome, email e senha com pelo menos 6 caracteres são obrigatórios."
+    });
   }
 
-  if (senha.length < 6) {
-    return res.status(400).json({ message: "A senha precisa ter pelo menos 6 caracteres." });
-  }
+  const db = await getPool();
 
-  const exists = await one(users, { email });
+  const exists = await db.request()
+    .input("email", sql.NVarChar(255), email)
+    .query("SELECT TOP 1 Id FROM dbo.Usuarios WHERE Email = @email;");
 
-  if (exists) {
+  if (exists.recordset.length) {
     return res.status(409).json({ message: "Este email já está cadastrado." });
   }
 
   const senhaHash = await bcrypt.hash(senha, 10);
-  const now = new Date().toISOString();
 
-  const user = await insert(users, {
-    nome,
-    email,
-    senhaHash,
-    telefone: "",
-    endereco: "",
-    foto,
-    createdAt: now,
-    updatedAt: now
-  });
+  const created = await db.request()
+    .input("nome", sql.NVarChar(160), nome)
+    .input("email", sql.NVarChar(255), email)
+    .input("senhaHash", sql.NVarChar(255), senhaHash)
+    .query(`
+      INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash)
+      OUTPUT INSERTED.*
+      VALUES (@nome, @email, @senhaHash);
+    `);
+
+  const user = created.recordset[0];
 
   res.status(201).json({
-    message: "Cadastro realizado com sucesso.",
-    token: tokenFor(user),
+    token: createToken(user),
     user: userSafe(user)
   });
 }));
 
 app.post("/api/auth/login", asyncRoute(async (req, res) => {
-  const email = cleanEmail(req.body.email);
-  const senha = cleanText(req.body.senha || req.body.password);
+  const email = cleanText(req.body.email).toLowerCase();
+  const senha = cleanText(req.body.senha);
 
-  if (!email || !senha) {
-    return res.status(400).json({ message: "Email e senha são obrigatórios." });
-  }
+  const db = await getPool();
 
-  const user = await one(users, { email });
+  const result = await db.request()
+    .input("email", sql.NVarChar(255), email)
+    .query("SELECT TOP 1 * FROM dbo.Usuarios WHERE Email = @email;");
+
+  const user = result.recordset[0];
 
   if (!user) {
     return res.status(401).json({ message: "Email ou senha inválidos." });
   }
 
-  const ok = await bcrypt.compare(senha, user.senhaHash);
+  const ok = await bcrypt.compare(senha, user.SenhaHash);
 
   if (!ok) {
     return res.status(401).json({ message: "Email ou senha inválidos." });
   }
 
   res.json({
-    message: "Login realizado com sucesso.",
-    token: tokenFor(user),
+    token: createToken(user),
     user: userSafe(user)
   });
 }));
@@ -338,33 +241,52 @@ app.get("/api/auth/profile", auth, asyncRoute(async (req, res) => {
 }));
 
 app.put("/api/auth/profile", auth, asyncRoute(async (req, res) => {
-  const nome = cleanText(req.body.nome);
+  const nome = cleanText(req.body.nome || req.user.Nome);
+  const telefone = cleanText(req.body.telefone);
+  const endereco = cleanText(req.body.endereco);
+  const foto = cleanText(req.body.foto);
 
-  if (!nome) {
-    return res.status(400).json({ message: "Nome é obrigatório." });
-  }
+  const db = await getPool();
 
-  await update(users, { _id: req.user._id }, {
-    $set: {
-      nome,
-      telefone: cleanText(req.body.telefone),
-      endereco: cleanText(req.body.endereco),
-      foto: cleanText(req.body.foto),
-      updatedAt: new Date().toISOString()
-    }
-  });
+  const result = await db.request()
+    .input("id", sql.Int, req.user.Id)
+    .input("nome", sql.NVarChar(160), nome)
+    .input("telefone", sql.NVarChar(60), telefone)
+    .input("endereco", sql.NVarChar(255), endereco)
+    .input("foto", sql.NVarChar(sql.MAX), foto)
+    .query(`
+      UPDATE dbo.Usuarios
+      SET Nome = @nome,
+          Telefone = @telefone,
+          Endereco = @endereco,
+          Foto = @foto,
+          UpdatedAt = SYSUTCDATETIME()
+      OUTPUT INSERTED.*
+      WHERE Id = @id;
+    `);
 
-  const updated = await one(users, { _id: req.user._id });
-
-  res.json({
-    message: "Perfil atualizado com sucesso.",
-    user: userSafe(updated)
-  });
+  res.json({ user: userSafe(result.recordset[0]) });
 }));
 
 app.get("/api/ocorrencias", asyncRoute(async (req, res) => {
-  const docs = await many(ocorrencias, {}, { createdAt: -1 });
-  res.json({ ocorrencias: docs.map(occurrenceSafe) });
+  const db = await getPool();
+
+  const result = await db.request().query(`
+    SELECT o.*, COUNT(v.UsuarioId) AS TotalVotos
+    FROM dbo.Ocorrencias o
+    LEFT JOIN dbo.OcorrenciaVotos v ON v.OcorrenciaId = o.Id
+    WHERE o.Status = 'aberta'
+    GROUP BY
+      o.Id, o.Titulo, o.Descricao, o.Categoria, o.Bairro, o.Endereco, o.Foto, o.Imagem,
+      o.Status, o.AdminStatus, o.Prioridade, o.PrioridadeScore, o.CreatedBy,
+      o.CreatedByName, o.CreatedAt, o.UpdatedAt, o.ApprovedAt, o.ApprovedBy,
+      o.RejectedAt, o.RejectedBy, o.RejectionReason
+    ORDER BY o.CreatedAt DESC;
+  `);
+
+  res.json({
+    ocorrencias: result.recordset.map(occurrenceSafe)
+  });
 }));
 
 app.post("/api/ocorrencias", auth, asyncRoute(async (req, res) => {
@@ -381,93 +303,267 @@ app.post("/api/ocorrencias", auth, asyncRoute(async (req, res) => {
   }
 
   const prioridade = cleanText(req.body.prioridade || "media").toLowerCase();
-  const now = new Date().toISOString();
+  const prioridadeScore = score(prioridade);
 
-  const created = await insert(ocorrencias, {
-    titulo,
-    descricao,
-    categoria: cleanText(req.body.categoria || "Geral"),
-    bairro: cleanText(req.body.bairro),
-    endereco: cleanText(req.body.endereco),
-    foto,
-    imagem: foto,
-    status: "aberta",
-    prioridade,
-    prioridadeScore: score(prioridade),
-    votos: {},
-    createdBy: req.user._id,
-    createdByName: req.user.nome,
-    createdAt: now,
-    updatedAt: now
-  });
+  const db = await getPool();
+
+  const result = await db.request()
+    .input("titulo", sql.NVarChar(180), titulo)
+    .input("descricao", sql.NVarChar(sql.MAX), descricao)
+    .input("categoria", sql.NVarChar(120), cleanText(req.body.categoria || "Geral"))
+    .input("bairro", sql.NVarChar(120), cleanText(req.body.bairro))
+    .input("endereco", sql.NVarChar(255), cleanText(req.body.endereco))
+    .input("foto", sql.NVarChar(sql.MAX), foto)
+    .input("prioridade", sql.NVarChar(30), prioridade)
+    .input("prioridadeScore", sql.Decimal(6, 2), prioridadeScore)
+    .input("createdBy", sql.Int, req.user.Id)
+    .input("createdByName", sql.NVarChar(160), req.user.Nome)
+    .query(`
+      INSERT INTO dbo.Ocorrencias
+      (
+        Titulo, Descricao, Categoria, Bairro, Endereco, Foto, Imagem,
+        Status, AdminStatus, Prioridade, PrioridadeScore,
+        CreatedBy, CreatedByName
+      )
+      OUTPUT INSERTED.*
+      VALUES
+      (
+        @titulo, @descricao, @categoria, @bairro, @endereco, @foto, @foto,
+        'pendente', 'pendente', @prioridade, @prioridadeScore,
+        @createdBy, @createdByName
+      );
+    `);
 
   res.status(201).json({
-    message: "Ocorrência criada com sucesso.",
-    ocorrencia: occurrenceSafe(created)
+    message: "Ocorrência enviada para análise do administrador.",
+    ocorrencia: occurrenceSafe(result.recordset[0])
   });
 }));
 
 app.post("/api/ocorrencias/:id/vote", auth, asyncRoute(async (req, res) => {
-  const item = await one(ocorrencias, { _id: req.params.id });
+  const id = Number(req.params.id);
+
+  const db = await getPool();
+
+  const found = await db.request()
+    .input("id", sql.Int, id)
+    .query("SELECT TOP 1 * FROM dbo.Ocorrencias WHERE Id = @id;");
+
+  const item = found.recordset[0];
 
   if (!item) {
     return res.status(404).json({ message: "Ocorrência não encontrada." });
   }
 
-  const voto = cleanText(req.body.prioridade || req.body.voto || "media").toLowerCase();
-  const votos = { ...(item.votos || {}), [req.user._id]: voto };
-  const values = Object.values(votos).map(score);
-  const average = values.reduce((a, b) => a + b, 0) / values.length;
+  if (item.Status !== "aberta") {
+    return res.status(403).json({ message: "Apenas ocorrências aprovadas podem receber votos." });
+  }
 
-  await update(ocorrencias, { _id: req.params.id }, {
-    $set: {
-      votos,
-      prioridade: priorityFromScore(average),
-      prioridadeScore: Number(average.toFixed(2)),
-      updatedAt: new Date().toISOString()
-    }
-  });
+  const prioridade = cleanText(req.body.prioridade || req.body.voto || "media").toLowerCase();
 
-  const updated = await one(ocorrencias, { _id: req.params.id });
+  await db.request()
+    .input("ocorrenciaId", sql.Int, id)
+    .input("usuarioId", sql.Int, req.user.Id)
+    .input("prioridade", sql.NVarChar(30), prioridade)
+    .query(`
+      MERGE dbo.OcorrenciaVotos AS target
+      USING (SELECT @ocorrenciaId AS OcorrenciaId, @usuarioId AS UsuarioId) AS source
+      ON target.OcorrenciaId = source.OcorrenciaId AND target.UsuarioId = source.UsuarioId
+      WHEN MATCHED THEN
+        UPDATE SET Prioridade = @prioridade, UpdatedAt = SYSUTCDATETIME()
+      WHEN NOT MATCHED THEN
+        INSERT (OcorrenciaId, UsuarioId, Prioridade)
+        VALUES (@ocorrenciaId, @usuarioId, @prioridade);
+    `);
 
-  res.json({
-    message: "Voto registrado com sucesso.",
-    ocorrencia: occurrenceSafe(updated)
-  });
+  const avg = await db.request()
+    .input("id", sql.Int, id)
+    .query(`
+      SELECT AVG(CAST(
+        CASE
+          WHEN Prioridade = 'baixa' THEN 1
+          WHEN Prioridade = 'media' THEN 2
+          WHEN Prioridade = N'média' THEN 2
+          WHEN Prioridade = 'alta' THEN 3
+          WHEN Prioridade = 'urgente' THEN 4
+          ELSE 2
+        END AS DECIMAL(6,2)
+      )) AS Media
+      FROM dbo.OcorrenciaVotos
+      WHERE OcorrenciaId = @id;
+    `);
+
+  const media = Number(avg.recordset[0].Media || 2);
+  const novaPrioridade = priorityFromScore(media);
+
+  await db.request()
+    .input("id", sql.Int, id)
+    .input("prioridade", sql.NVarChar(30), novaPrioridade)
+    .input("score", sql.Decimal(6, 2), Number(media.toFixed(2)))
+    .query(`
+      UPDATE dbo.Ocorrencias
+      SET Prioridade = @prioridade,
+          PrioridadeScore = @score,
+          UpdatedAt = SYSUTCDATETIME()
+      WHERE Id = @id;
+    `);
+
+  res.json({ message: "Voto registrado com sucesso." });
 }));
 
 app.get("/api/ocorrencias/ranking", asyncRoute(async (req, res) => {
-  const docs = await many(ocorrencias, {});
-  const ranking = docs
-    .map(occurrenceSafe)
-    .sort((a, b) => b.prioridadeScore - a.prioridadeScore || b.totalVotos - a.totalVotos || new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 10);
+  const db = await getPool();
 
-  res.json({ ranking });
+  const result = await db.request().query(`
+    SELECT TOP 10 o.*, COUNT(v.UsuarioId) AS TotalVotos
+    FROM dbo.Ocorrencias o
+    LEFT JOIN dbo.OcorrenciaVotos v ON v.OcorrenciaId = o.Id
+    WHERE o.Status = 'aberta'
+    GROUP BY
+      o.Id, o.Titulo, o.Descricao, o.Categoria, o.Bairro, o.Endereco, o.Foto, o.Imagem,
+      o.Status, o.AdminStatus, o.Prioridade, o.PrioridadeScore, o.CreatedBy,
+      o.CreatedByName, o.CreatedAt, o.UpdatedAt, o.ApprovedAt, o.ApprovedBy,
+      o.RejectedAt, o.RejectedBy, o.RejectionReason
+    ORDER BY o.PrioridadeScore DESC, TotalVotos DESC, o.CreatedAt DESC;
+  `);
+
+  res.json({
+    ranking: result.recordset.map(occurrenceSafe)
+  });
+}));
+
+app.get("/api/admin/ocorrencias", adminAuth, asyncRoute(async (req, res) => {
+  const status = cleanText(req.query.status || "pendente");
+
+  const db = await getPool();
+
+  let where = "";
+
+  if (status !== "todas") {
+    where = "WHERE o.Status = @status";
+  }
+
+  const request = db.request();
+
+  if (status !== "todas") {
+    request.input("status", sql.NVarChar(30), status);
+  }
+
+  const result = await request.query(`
+    SELECT o.*, COUNT(v.UsuarioId) AS TotalVotos
+    FROM dbo.Ocorrencias o
+    LEFT JOIN dbo.OcorrenciaVotos v ON v.OcorrenciaId = o.Id
+    ${where}
+    GROUP BY
+      o.Id, o.Titulo, o.Descricao, o.Categoria, o.Bairro, o.Endereco, o.Foto, o.Imagem,
+      o.Status, o.AdminStatus, o.Prioridade, o.PrioridadeScore, o.CreatedBy,
+      o.CreatedByName, o.CreatedAt, o.UpdatedAt, o.ApprovedAt, o.ApprovedBy,
+      o.RejectedAt, o.RejectedBy, o.RejectionReason
+    ORDER BY o.CreatedAt DESC;
+  `);
+
+  const resumo = await db.request().query(`
+    SELECT
+      SUM(CASE WHEN Status = 'pendente' THEN 1 ELSE 0 END) AS Pendentes,
+      SUM(CASE WHEN Status = 'aberta' THEN 1 ELSE 0 END) AS Publicadas,
+      SUM(CASE WHEN Status = 'recusada' THEN 1 ELSE 0 END) AS Recusadas,
+      COUNT(*) AS Total
+    FROM dbo.Ocorrencias;
+  `);
+
+  const r = resumo.recordset[0] || {};
+
+  res.json({
+    ocorrencias: result.recordset.map(occurrenceSafe),
+    resumo: {
+      pendentes: Number(r.Pendentes || 0),
+      publicadas: Number(r.Publicadas || 0),
+      recusadas: Number(r.Recusadas || 0),
+      total: Number(r.Total || 0)
+    }
+  });
+}));
+
+app.post("/api/admin/ocorrencias/:id/aprovar", adminAuth, asyncRoute(async (req, res) => {
+  const id = Number(req.params.id);
+  const db = await getPool();
+
+  const result = await db.request()
+    .input("id", sql.Int, id)
+    .query(`
+      UPDATE dbo.Ocorrencias
+      SET Status = 'aberta',
+          AdminStatus = 'aprovada',
+          ApprovedAt = SYSUTCDATETIME(),
+          ApprovedBy = N'Administrador',
+          RejectionReason = NULL,
+          UpdatedAt = SYSUTCDATETIME()
+      OUTPUT INSERTED.*
+      WHERE Id = @id;
+    `);
+
+  if (!result.recordset.length) {
+    return res.status(404).json({ message: "Solicitação não encontrada." });
+  }
+
+  res.json({
+    message: "Ocorrência aprovada e publicada.",
+    ocorrencia: occurrenceSafe(result.recordset[0])
+  });
+}));
+
+app.post("/api/admin/ocorrencias/:id/recusar", adminAuth, asyncRoute(async (req, res) => {
+  const id = Number(req.params.id);
+  const motivo = cleanText(req.body.motivo || "Ocorrência recusada na moderação.");
+  const db = await getPool();
+
+  const result = await db.request()
+    .input("id", sql.Int, id)
+    .input("motivo", sql.NVarChar(sql.MAX), motivo)
+    .query(`
+      UPDATE dbo.Ocorrencias
+      SET Status = 'recusada',
+          AdminStatus = 'recusada',
+          RejectedAt = SYSUTCDATETIME(),
+          RejectedBy = N'Administrador',
+          RejectionReason = @motivo,
+          UpdatedAt = SYSUTCDATETIME()
+      OUTPUT INSERTED.*
+      WHERE Id = @id;
+    `);
+
+  if (!result.recordset.length) {
+    return res.status(404).json({ message: "Solicitação não encontrada." });
+  }
+
+  res.json({
+    message: "Ocorrência recusada.",
+    ocorrencia: occurrenceSafe(result.recordset[0])
+  });
 }));
 
 app.use(express.static(frontendDir));
 
-app.get("/ocorrencias", (req, res) => {
-  res.sendFile(path.join(frontendDir, "ocorrencias.html"));
-});
-
-app.get("/perfil", (req, res) => {
-  res.sendFile(path.join(frontendDir, "perfil.html"));
-});
-
-app.get("*", (req, res) => {
-  if (req.path.startsWith("/api")) {
-    return res.status(404).json({ message: "Rota de API não encontrada." });
-  }
-
+app.get("/", (req, res) => {
   res.sendFile(path.join(frontendDir, "index.html"));
 });
 
-seed().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-    console.log(`Backend: Node.js + Express`);
-    console.log(`Health check: http://localhost:${PORT}/api/health`);
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({
+    message: "Erro interno no servidor.",
+    detail: process.env.NODE_ENV === "production" ? undefined : err.message
   });
 });
+
+getPool()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`[Bairro Conectado] Backend SQL Server rodando em http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Erro ao conectar ao SQL Server:");
+    console.error(err);
+    process.exit(1);
+  });

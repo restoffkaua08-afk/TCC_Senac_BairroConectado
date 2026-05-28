@@ -5,3 +5,28 @@ backend/uploads/
 database.db/
 .DS_Store
 .env
+
+Ambiente local
+
+.env
+
+Banco local
+
+*.mdf
+*.ldf
+*.bak
+*.trn
+
+Node
+
+node_modules/
+
+.NET
+
+bin/
+obj/
+
+Backups locais
+
+backup-admin-moderacao-/
+backup-fix-compilacao-/

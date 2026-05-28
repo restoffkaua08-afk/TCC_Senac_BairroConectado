@@ -1,6 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Compile Update="backup-admin-moderacao-20260528-094219\dashboard.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="backup-admin-moderacao-20260528-094219\Form1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="backup-admin-moderacao-20260528-094219\home.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="dashboard.cs">
       <SubType>Form</SubType>
     </Compile>

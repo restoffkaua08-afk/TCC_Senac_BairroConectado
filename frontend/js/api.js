@@ -1142,7 +1142,7 @@
             body: JSON.stringify(body)
           });
 
-          toast("Ocorrência cadastrada.");
+          toast("Ocorrência enviada para análise do administrador.");
           expandedOccurrenceId = null;
           renderOccurrencesPage();
         } catch (err) {
@@ -1321,3 +1321,4 @@
 
   document.addEventListener("DOMContentLoaded", boot);
 })();
+
