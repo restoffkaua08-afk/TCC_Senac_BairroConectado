@@ -1,0 +1,498 @@
+﻿/* =========================================================
+   Bairro Conectado — Ajuste profissional da HOME
+   Correção:
+   - remove a placa/vidro em cima da imagem inicial
+   - coloca submenu no topo real da página
+   - tira quadro arredondado atrás do submenu
+   - aplica glassmorphism no restante da home
+   - reduz efeitos pesados para não travar
+========================================================= */
+
+body:has(.home-page){
+  background:
+    radial-gradient(circle at 10% 16%, rgba(37,99,235,.13), transparent 28%),
+    radial-gradient(circle at 88% 28%, rgba(22,163,74,.10), transparent 26%),
+    radial-gradient(circle at 42% 92%, rgba(15,23,42,.08), transparent 34%),
+    #f4f7fb;
+}
+
+/* Fundo geral com imagem sutil, sem background fixed para não travar */
+.home-page{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  background:transparent;
+  padding-top:58px;
+}
+
+.home-page::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-2;
+  pointer-events:none;
+  background:
+    linear-gradient(rgba(244,247,251,.90), rgba(244,247,251,.94)),
+    url("https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1800&q=80") center 360px/cover no-repeat;
+  opacity:.38;
+}
+
+.home-page::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at 18% 34%, rgba(255,255,255,.45), transparent 18%),
+    radial-gradient(circle at 78% 46%, rgba(37,99,235,.08), transparent 22%),
+    radial-gradient(circle at 24% 78%, rgba(22,163,74,.08), transparent 24%);
+}
+
+/* Remove a placa que tinha ficado na frente da imagem inicial */
+.home-hero::before{
+  content:none !important;
+  display:none !important;
+}
+
+.home-hero{
+  min-height:640px;
+  padding:104px clamp(28px,6vw,104px) 106px;
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 24px 70px rgba(15,23,42,.18);
+}
+
+.home-hero-content{
+  position:relative;
+  z-index:1;
+  max-width:1040px;
+}
+
+.home-hero h1{
+  text-shadow:0 16px 42px rgba(0,0,0,.32);
+}
+
+.home-hero p{
+  max-width:840px;
+}
+
+.home-kicker,
+.home-btn.secondary{
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+
+.home-btn{
+  transition:transform .18s ease, box-shadow .18s ease, background .18s ease;
+  box-shadow:0 14px 32px rgba(15,23,42,.18);
+}
+
+.home-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 42px rgba(15,23,42,.22);
+}
+
+/* Submenu no topo real do site, sem quadro arredondado atrás */
+.home-internal-nav-wrap{
+  position:fixed;
+  top:74px;
+  left:0;
+  right:0;
+  z-index:8490;
+  padding:10px clamp(18px,4vw,72px);
+  background:rgba(255,255,255,.76);
+  border-bottom:1px solid rgba(226,232,240,.78);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 10px 30px rgba(15,23,42,.07);
+}
+
+.home-internal-nav{
+  width:min(1440px,100%);
+  min-height:40px;
+  margin:0 auto;
+  padding:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+  overflow-x:auto;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+}
+
+.home-internal-nav a{
+  min-height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 15px;
+  white-space:nowrap;
+  text-decoration:none;
+  color:#1e293b;
+  background:transparent !important;
+  border:1px solid transparent !important;
+  border-radius:999px;
+  font-weight:900;
+  font-size:14px;
+  letter-spacing:.01em;
+  transition:background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.home-internal-nav a:hover{
+  background:rgba(37,99,235,.10) !important;
+  color:#1d4ed8;
+  border-color:rgba(37,99,235,.16) !important;
+}
+
+/* Mais respiro sem estourar layout */
+.home-section{
+  padding:88px clamp(26px,6vw,104px);
+  position:relative;
+}
+
+.home-section.alt{
+  background:rgba(255,255,255,.42);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+
+.home-section-inner{
+  width:min(1500px,100%);
+}
+
+.home-section-title{
+  margin-bottom:34px;
+}
+
+.home-section-title p{
+  max-width:780px;
+}
+
+/* Glassmorphism aplicado no conteúdo abaixo do hero */
+.home-carousel,
+.home-card,
+.home-wide-cta,
+.home-map-panel,
+.home-map-info article,
+.home-map-copy{
+  border:1px solid rgba(255,255,255,.72);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  box-shadow:
+    0 22px 58px rgba(15,23,42,.11),
+    inset 0 1px 0 rgba(255,255,255,.58);
+}
+
+/* Carrossel maior, porém sem efeito pesado */
+.home-carousel{
+  min-height:480px;
+  border-radius:34px;
+  background:rgba(255,255,255,.76);
+  overflow:hidden;
+}
+
+.home-banner{
+  min-height:480px;
+  grid-template-columns:minmax(430px,.94fr) minmax(520px,1.06fr);
+  background:linear-gradient(135deg, rgba(255,255,255,.94), rgba(248,250,252,.74));
+}
+
+.home-banner-copy{
+  padding:58px clamp(42px,5vw,72px);
+}
+
+.home-banner-copy h3{
+  font-size:clamp(32px,4vw,54px);
+}
+
+.home-banner-copy p{
+  max-width:630px;
+  font-size:18px;
+}
+
+.home-banner-img{
+  min-height:480px;
+  position:relative;
+  overflow:hidden;
+}
+
+.home-banner-img::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.14), transparent 38%),
+    linear-gradient(180deg, transparent, rgba(15,23,42,.10));
+  pointer-events:none;
+}
+
+.home-carousel-footer{
+  margin-top:22px;
+  padding:0 6px;
+}
+
+.home-carousel-buttons button{
+  width:50px;
+  height:50px;
+  border-radius:16px;
+  box-shadow:0 14px 32px rgba(15,23,42,.18);
+  transition:transform .16s ease, box-shadow .16s ease;
+}
+
+.home-carousel-buttons button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 42px rgba(15,23,42,.22);
+}
+
+.home-dots{
+  padding:10px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(226,232,240,.72);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+
+/* Cards com profundidade moderada */
+.home-card-grid{
+  gap:26px;
+}
+
+.home-card{
+  background:rgba(255,255,255,.74);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+
+.home-card:hover{
+  transform:translateY(-5px);
+  box-shadow:
+    0 26px 68px rgba(15,23,42,.14),
+    inset 0 1px 0 rgba(255,255,255,.62);
+}
+
+.home-card img{
+  height:220px;
+}
+
+.home-card-body{
+  padding:25px;
+}
+
+.home-wide-cta{
+  margin-top:34px;
+  padding:50px;
+}
+
+/* Mapa e fechamento da home */
+.home-map-section{
+  padding:88px clamp(26px,6vw,104px);
+  background:rgba(255,255,255,.36);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+
+.home-map-inner{
+  width:min(1500px,100%);
+  margin:0 auto;
+}
+
+/* Remove travamentos causados por animações/transforms exagerados */
+.home-carousel,
+.home-banner-img,
+.home-card{
+  transform:none !important;
+  will-change:auto;
+}
+
+/* Responsivo */
+@media(max-width:1100px){
+  .home-page{
+    padding-top:62px;
+  }
+
+  .home-hero{
+    min-height:590px;
+    padding-top:96px;
+  }
+
+  .home-banner{
+    grid-template-columns:1fr;
+    min-height:auto;
+  }
+
+  .home-banner-img{
+    min-height:340px;
+    order:-1;
+  }
+
+  .home-banner-copy{
+    padding:40px;
+  }
+
+  .home-internal-nav{
+    justify-content:flex-start;
+  }
+}
+
+@media(max-width:720px){
+  .home-page{
+    padding-top:56px;
+  }
+
+  .home-internal-nav-wrap{
+    top:70px;
+    padding:8px 12px;
+  }
+
+  .home-internal-nav{
+    justify-content:flex-start;
+  }
+
+  .home-internal-nav a{
+    padding:0 13px;
+    font-size:13px;
+  }
+
+  .home-hero{
+    min-height:auto;
+    padding:78px 18px 68px;
+  }
+
+  .home-section,
+  .home-map-section{
+    padding:56px 16px;
+  }
+
+  .home-banner-copy{
+    padding:28px;
+  }
+
+  .home-banner-img{
+    min-height:270px;
+  }
+
+  .home-wide-cta{
+    padding:32px;
+  }
+}
+
+/* =========================================================
+   Correção V3 — Submenus na barra original
+   - remove a barra extra criada antes
+   - esconde submenu antigo abaixo do hero
+   - deixa os submenus como texto puro
+========================================================= */
+
+.home-page{
+  padding-top:0 !important;
+}
+
+.home-internal-nav-wrap{
+  display:none !important;
+}
+
+/* Barra original do sistema */
+body:has(.home-page) .bc-topbar{
+  z-index:9500;
+  min-height:76px;
+  padding-top:12px;
+  padding-bottom:12px;
+  background:rgba(255,255,255,.86);
+  border-bottom:1px solid rgba(226,232,240,.72);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 10px 32px rgba(15,23,42,.08);
+}
+
+/* Menu principal mais limpo na home */
+body:has(.home-page) .bc-topnav{
+  gap:18px;
+  align-items:center;
+}
+
+/* Links principais como texto, não como card */
+body:has(.home-page) .bc-topnav > a{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  padding:0 !important;
+  border-radius:0 !important;
+  color:#1e293b !important;
+  font-weight:900;
+}
+
+body:has(.home-page) .bc-topnav > a:hover{
+  color:#2563eb !important;
+  background:transparent !important;
+}
+
+/* Grupo dos submenus da home dentro da barra original */
+.bc-home-subnav{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  margin-left:2px;
+  padding-left:2px;
+}
+
+/* Submenus: texto puro, sem card, sem contorno */
+.bc-home-subnav a{
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  padding:0 !important;
+  border-radius:0 !important;
+  color:#475569 !important;
+  text-decoration:none;
+  font-size:14px;
+  font-weight:800;
+  line-height:1;
+  white-space:nowrap;
+  transition:color .16s ease, transform .16s ease;
+}
+
+.bc-home-subnav a:hover{
+  color:#2563eb !important;
+  background:transparent !important;
+  transform:translateY(-1px);
+}
+
+/* Mantém o botão de acessar comunidade com cara de ação */
+body:has(.home-page) .bc-topnav > button[data-auth-trigger]{
+  margin-left:2px;
+  border-radius:999px;
+}
+
+/* Corrige rolagem dos anchors por causa do topo fixo/sticky */
+#eventos,
+#obras,
+#comercio,
+#empregos,
+#projetos,
+#servicos,
+#mapa{
+  scroll-margin-top:96px;
+}
+
+/* Responsivo: se não couber, permite rolagem horizontal sem quebrar layout */
+@media(max-width:1180px){
+  body:has(.home-page) .bc-topnav{
+    overflow-x:auto;
+    max-width:calc(100vw - 260px);
+    padding-bottom:4px;
+  }
+
+  .bc-home-subnav{
+    gap:15px;
+  }
+}
+
+@media(max-width:760px){
+  .bc-home-subnav{
+    display:none;
+  }
+}
