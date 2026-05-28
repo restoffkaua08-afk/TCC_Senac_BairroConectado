@@ -30,3 +30,23 @@ Backups locais
 
 backup-admin-moderacao-/
 backup-fix-compilacao-/
+
+# Backups locais do aplicativo desktop
+**/backup-admin-moderacao-*/
+**/backup-fix-compilacao-*/
+
+# Ambiente local
+.env
+
+# Banco local
+*.mdf
+*.ldf
+*.bak
+*.trn
+
+# Node
+node_modules/
+
+# .NET
+bin/
+obj/
