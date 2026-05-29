@@ -1,40 +1,70 @@
 ﻿require("dotenv").config();
 
+const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const sql = require("mssql/msnodesqlv8");
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "bairro-conectado-secret-dev";
 const ADMIN_KEY = process.env.ADMIN_KEY || "bairro-admin-2026";
-const DB_CONNECTION_STRING = process.env.DB_CONNECTION_STRING;
-
-if (!DB_CONNECTION_STRING) {
-  console.error("DB_CONNECTION_STRING não configurada no .env.");
-  process.exit(1);
-}
 
 const frontendDir = path.join(__dirname, "..", "frontend");
+const dataDir = path.join(__dirname, "data");
+const dbFile = path.join(dataDir, "bairro-db.json");
 
 app.use(cors());
-app.use(express.json({ limit: "15mb" }));
-app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+app.use(express.json({ limit: "25mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 
-let pool;
+function ensureDb() {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
 
-async function getPool() {
-  if (pool && pool.connected) return pool;
+  if (!fs.existsSync(dbFile)) {
+    const initial = {
+      users: [],
+      occurrences: [],
+      votes: []
+    };
 
-  pool = await new sql.ConnectionPool({
-    connectionString: DB_CONNECTION_STRING
-  }).connect();
+    fs.writeFileSync(dbFile, JSON.stringify(initial, null, 2), "utf8");
+  }
+}
 
-  return pool;
+function readDb() {
+  ensureDb();
+
+  try {
+    const data = JSON.parse(fs.readFileSync(dbFile, "utf8"));
+
+    return {
+      users: Array.isArray(data.users) ? data.users : [],
+      occurrences: Array.isArray(data.occurrences) ? data.occurrences : [],
+      votes: Array.isArray(data.votes) ? data.votes : []
+    };
+  } catch {
+    return {
+      users: [],
+      occurrences: [],
+      votes: []
+    };
+  }
+}
+
+function writeDb(db) {
+  ensureDb();
+  fs.writeFileSync(dbFile, JSON.stringify(db, null, 2), "utf8");
+}
+
+function nextId(items) {
+  const values = items.map((item) => Number(item.id || 0)).filter(Number.isFinite);
+  return values.length ? Math.max(...values) + 1 : 1;
 }
 
 function asyncRoute(fn) {
@@ -66,9 +96,9 @@ function priorityFromScore(value) {
 function createToken(user) {
   return jwt.sign(
     {
-      id: user.Id,
-      email: user.Email,
-      nome: user.Nome
+      id: user.id,
+      email: user.email,
+      nome: user.nome
     },
     JWT_SECRET,
     { expiresIn: "7d" }
@@ -79,41 +109,43 @@ function userSafe(user) {
   if (!user) return null;
 
   return {
-    id: String(user.Id),
-    nome: user.Nome || "",
-    email: user.Email || "",
-    telefone: user.Telefone || "",
-    endereco: user.Endereco || "",
-    foto: user.Foto || ""
+    id: String(user.id),
+    nome: user.nome || "",
+    email: user.email || "",
+    telefone: user.telefone || "",
+    endereco: user.endereco || "",
+    foto: user.foto || ""
   };
 }
 
-function occurrenceSafe(item) {
+function occurrenceSafe(item, db) {
   if (!item) return null;
 
+  const votes = db ? db.votes.filter((vote) => String(vote.occurrenceId) === String(item.id)) : [];
+
   return {
-    id: String(item.Id),
-    _id: String(item.Id),
-    titulo: item.Titulo || "",
-    descricao: item.Descricao || "",
-    categoria: item.Categoria || "Geral",
-    bairro: item.Bairro || "",
-    endereco: item.Endereco || "",
-    foto: item.Foto || item.Imagem || "",
-    imagem: item.Imagem || item.Foto || "",
-    status: item.Status || "pendente",
-    adminStatus: item.AdminStatus || "",
-    prioridade: item.Prioridade || "media",
-    prioridadeScore: Number(item.PrioridadeScore || 2),
-    totalVotos: Number(item.TotalVotos || 0),
-    createdByName: item.CreatedByName || "Sistema",
-    createdAt: item.CreatedAt,
-    updatedAt: item.UpdatedAt,
-    rejectionReason: item.RejectionReason || ""
+    id: String(item.id),
+    _id: String(item.id),
+    titulo: item.titulo || "",
+    descricao: item.descricao || "",
+    categoria: item.categoria || "Geral",
+    bairro: item.bairro || "",
+    endereco: item.endereco || "",
+    foto: item.foto || item.imagem || "",
+    imagem: item.imagem || item.foto || "",
+    status: item.status || "pendente",
+    adminStatus: item.adminStatus || "",
+    prioridade: item.prioridade || "media",
+    prioridadeScore: Number(item.prioridadeScore || 2),
+    totalVotos: votes.length,
+    createdByName: item.createdByName || "Sistema",
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+    rejectionReason: item.rejectionReason || ""
   };
 }
 
-async function auth(req, res, next) {
+function auth(req, res, next) {
   try {
     const header = req.headers.authorization || "";
     const token = header.startsWith("Bearer ") ? header.slice(7) : "";
@@ -123,17 +155,14 @@ async function auth(req, res, next) {
     }
 
     const payload = jwt.verify(token, JWT_SECRET);
-    const db = await getPool();
+    const db = readDb();
+    const user = db.users.find((item) => String(item.id) === String(payload.id));
 
-    const result = await db.request()
-      .input("id", sql.Int, Number(payload.id))
-      .query("SELECT TOP 1 * FROM dbo.Usuarios WHERE Id = @id;");
-
-    if (!result.recordset.length) {
+    if (!user) {
       return res.status(401).json({ message: "Sessão inválida ou expirada." });
     }
 
-    req.user = result.recordset[0];
+    req.user = user;
     next();
   } catch {
     return res.status(401).json({ message: "Sessão inválida ou expirada." });
@@ -157,20 +186,22 @@ function adminAuth(req, res, next) {
 }
 
 app.get("/api/health", asyncRoute(async (req, res) => {
-  const db = await getPool();
-  await db.request().query("SELECT 1 AS Ok;");
+  const db = readDb();
 
   res.json({
     ok: true,
-    database: "sqlserver",
-    message: "Backend conectado ao SQL Server."
+    database: "json-local",
+    users: db.users.length,
+    occurrences: db.occurrences.length,
+    votes: db.votes.length,
+    message: "Backend portátil rodando com banco JSON local."
   });
 }));
 
 app.post("/api/auth/register", asyncRoute(async (req, res) => {
   const nome = cleanText(req.body.nome);
   const email = cleanText(req.body.email).toLowerCase();
-  const senha = cleanText(req.body.senha);
+  const senha = cleanText(req.body.senha || req.body.password);
 
   if (!nome || !email || senha.length < 6) {
     return res.status(400).json({
@@ -178,29 +209,30 @@ app.post("/api/auth/register", asyncRoute(async (req, res) => {
     });
   }
 
-  const db = await getPool();
+  const db = readDb();
 
-  const exists = await db.request()
-    .input("email", sql.NVarChar(255), email)
-    .query("SELECT TOP 1 Id FROM dbo.Usuarios WHERE Email = @email;");
+  const exists = db.users.find((user) => user.email === email);
 
-  if (exists.recordset.length) {
+  if (exists) {
     return res.status(409).json({ message: "Este email já está cadastrado." });
   }
 
-  const senhaHash = await bcrypt.hash(senha, 10);
+  const now = new Date().toISOString();
 
-  const created = await db.request()
-    .input("nome", sql.NVarChar(160), nome)
-    .input("email", sql.NVarChar(255), email)
-    .input("senhaHash", sql.NVarChar(255), senhaHash)
-    .query(`
-      INSERT INTO dbo.Usuarios (Nome, Email, SenhaHash)
-      OUTPUT INSERTED.*
-      VALUES (@nome, @email, @senhaHash);
-    `);
+  const user = {
+    id: nextId(db.users),
+    nome,
+    email,
+    senhaHash: await bcrypt.hash(senha, 10),
+    telefone: "",
+    endereco: "",
+    foto: "",
+    createdAt: now,
+    updatedAt: now
+  };
 
-  const user = created.recordset[0];
+  db.users.push(user);
+  writeDb(db);
 
   res.status(201).json({
     token: createToken(user),
@@ -210,21 +242,16 @@ app.post("/api/auth/register", asyncRoute(async (req, res) => {
 
 app.post("/api/auth/login", asyncRoute(async (req, res) => {
   const email = cleanText(req.body.email).toLowerCase();
-  const senha = cleanText(req.body.senha);
+  const senha = cleanText(req.body.senha || req.body.password);
 
-  const db = await getPool();
-
-  const result = await db.request()
-    .input("email", sql.NVarChar(255), email)
-    .query("SELECT TOP 1 * FROM dbo.Usuarios WHERE Email = @email;");
-
-  const user = result.recordset[0];
+  const db = readDb();
+  const user = db.users.find((item) => item.email === email);
 
   if (!user) {
     return res.status(401).json({ message: "Email ou senha inválidos." });
   }
 
-  const ok = await bcrypt.compare(senha, user.SenhaHash);
+  const ok = await bcrypt.compare(senha, user.senhaHash);
 
   if (!ok) {
     return res.status(401).json({ message: "Email ou senha inválidos." });
@@ -241,52 +268,36 @@ app.get("/api/auth/profile", auth, asyncRoute(async (req, res) => {
 }));
 
 app.put("/api/auth/profile", auth, asyncRoute(async (req, res) => {
-  const nome = cleanText(req.body.nome || req.user.Nome);
-  const telefone = cleanText(req.body.telefone);
-  const endereco = cleanText(req.body.endereco);
-  const foto = cleanText(req.body.foto);
+  const db = readDb();
+  const index = db.users.findIndex((user) => String(user.id) === String(req.user.id));
 
-  const db = await getPool();
+  if (index < 0) {
+    return res.status(404).json({ message: "Usuário não encontrado." });
+  }
 
-  const result = await db.request()
-    .input("id", sql.Int, req.user.Id)
-    .input("nome", sql.NVarChar(160), nome)
-    .input("telefone", sql.NVarChar(60), telefone)
-    .input("endereco", sql.NVarChar(255), endereco)
-    .input("foto", sql.NVarChar(sql.MAX), foto)
-    .query(`
-      UPDATE dbo.Usuarios
-      SET Nome = @nome,
-          Telefone = @telefone,
-          Endereco = @endereco,
-          Foto = @foto,
-          UpdatedAt = SYSUTCDATETIME()
-      OUTPUT INSERTED.*
-      WHERE Id = @id;
-    `);
+  db.users[index] = {
+    ...db.users[index],
+    nome: cleanText(req.body.nome || db.users[index].nome),
+    telefone: cleanText(req.body.telefone),
+    endereco: cleanText(req.body.endereco),
+    foto: cleanText(req.body.foto),
+    updatedAt: new Date().toISOString()
+  };
 
-  res.json({ user: userSafe(result.recordset[0]) });
+  writeDb(db);
+
+  res.json({ user: userSafe(db.users[index]) });
 }));
 
 app.get("/api/ocorrencias", asyncRoute(async (req, res) => {
-  const db = await getPool();
+  const db = readDb();
 
-  const result = await db.request().query(`
-    SELECT o.*, COUNT(v.UsuarioId) AS TotalVotos
-    FROM dbo.Ocorrencias o
-    LEFT JOIN dbo.OcorrenciaVotos v ON v.OcorrenciaId = o.Id
-    WHERE o.Status = 'aberta'
-    GROUP BY
-      o.Id, o.Titulo, o.Descricao, o.Categoria, o.Bairro, o.Endereco, o.Foto, o.Imagem,
-      o.Status, o.AdminStatus, o.Prioridade, o.PrioridadeScore, o.CreatedBy,
-      o.CreatedByName, o.CreatedAt, o.UpdatedAt, o.ApprovedAt, o.ApprovedBy,
-      o.RejectedAt, o.RejectedBy, o.RejectionReason
-    ORDER BY o.CreatedAt DESC;
-  `);
+  const ocorrencias = db.occurrences
+    .filter((item) => item.status === "aberta")
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .map((item) => occurrenceSafe(item, db));
 
-  res.json({
-    ocorrencias: result.recordset.map(occurrenceSafe)
-  });
+  res.json({ ocorrencias });
 }));
 
 app.post("/api/ocorrencias", auth, asyncRoute(async (req, res) => {
@@ -302,243 +313,176 @@ app.post("/api/ocorrencias", auth, asyncRoute(async (req, res) => {
     return res.status(400).json({ message: "A ocorrência precisa ter pelo menos uma foto." });
   }
 
+  const db = readDb();
+
   const prioridade = cleanText(req.body.prioridade || "media").toLowerCase();
-  const prioridadeScore = score(prioridade);
+  const now = new Date().toISOString();
 
-  const db = await getPool();
+  const occurrence = {
+    id: nextId(db.occurrences),
+    titulo,
+    descricao,
+    categoria: cleanText(req.body.categoria || "Geral"),
+    bairro: cleanText(req.body.bairro),
+    endereco: cleanText(req.body.endereco),
+    foto,
+    imagem: foto,
+    status: "pendente",
+    adminStatus: "pendente",
+    prioridade,
+    prioridadeScore: score(prioridade),
+    createdBy: req.user.id,
+    createdByName: req.user.nome,
+    createdAt: now,
+    updatedAt: now,
+    approvedAt: null,
+    approvedBy: "",
+    rejectedAt: null,
+    rejectedBy: "",
+    rejectionReason: ""
+  };
 
-  const result = await db.request()
-    .input("titulo", sql.NVarChar(180), titulo)
-    .input("descricao", sql.NVarChar(sql.MAX), descricao)
-    .input("categoria", sql.NVarChar(120), cleanText(req.body.categoria || "Geral"))
-    .input("bairro", sql.NVarChar(120), cleanText(req.body.bairro))
-    .input("endereco", sql.NVarChar(255), cleanText(req.body.endereco))
-    .input("foto", sql.NVarChar(sql.MAX), foto)
-    .input("prioridade", sql.NVarChar(30), prioridade)
-    .input("prioridadeScore", sql.Decimal(6, 2), prioridadeScore)
-    .input("createdBy", sql.Int, req.user.Id)
-    .input("createdByName", sql.NVarChar(160), req.user.Nome)
-    .query(`
-      INSERT INTO dbo.Ocorrencias
-      (
-        Titulo, Descricao, Categoria, Bairro, Endereco, Foto, Imagem,
-        Status, AdminStatus, Prioridade, PrioridadeScore,
-        CreatedBy, CreatedByName
-      )
-      OUTPUT INSERTED.*
-      VALUES
-      (
-        @titulo, @descricao, @categoria, @bairro, @endereco, @foto, @foto,
-        'pendente', 'pendente', @prioridade, @prioridadeScore,
-        @createdBy, @createdByName
-      );
-    `);
+  db.occurrences.push(occurrence);
+  writeDb(db);
 
   res.status(201).json({
     message: "Ocorrência enviada para análise do administrador.",
-    ocorrencia: occurrenceSafe(result.recordset[0])
+    ocorrencia: occurrenceSafe(occurrence, db)
   });
 }));
 
 app.post("/api/ocorrencias/:id/vote", auth, asyncRoute(async (req, res) => {
-  const id = Number(req.params.id);
+  const db = readDb();
+  const id = String(req.params.id);
+  const occurrence = db.occurrences.find((item) => String(item.id) === id);
 
-  const db = await getPool();
-
-  const found = await db.request()
-    .input("id", sql.Int, id)
-    .query("SELECT TOP 1 * FROM dbo.Ocorrencias WHERE Id = @id;");
-
-  const item = found.recordset[0];
-
-  if (!item) {
+  if (!occurrence) {
     return res.status(404).json({ message: "Ocorrência não encontrada." });
   }
 
-  if (item.Status !== "aberta") {
+  if (occurrence.status !== "aberta") {
     return res.status(403).json({ message: "Apenas ocorrências aprovadas podem receber votos." });
   }
 
   const prioridade = cleanText(req.body.prioridade || req.body.voto || "media").toLowerCase();
 
-  await db.request()
-    .input("ocorrenciaId", sql.Int, id)
-    .input("usuarioId", sql.Int, req.user.Id)
-    .input("prioridade", sql.NVarChar(30), prioridade)
-    .query(`
-      MERGE dbo.OcorrenciaVotos AS target
-      USING (SELECT @ocorrenciaId AS OcorrenciaId, @usuarioId AS UsuarioId) AS source
-      ON target.OcorrenciaId = source.OcorrenciaId AND target.UsuarioId = source.UsuarioId
-      WHEN MATCHED THEN
-        UPDATE SET Prioridade = @prioridade, UpdatedAt = SYSUTCDATETIME()
-      WHEN NOT MATCHED THEN
-        INSERT (OcorrenciaId, UsuarioId, Prioridade)
-        VALUES (@ocorrenciaId, @usuarioId, @prioridade);
-    `);
+  const existing = db.votes.find(
+    (vote) => String(vote.occurrenceId) === id && String(vote.userId) === String(req.user.id)
+  );
 
-  const avg = await db.request()
-    .input("id", sql.Int, id)
-    .query(`
-      SELECT AVG(CAST(
-        CASE
-          WHEN Prioridade = 'baixa' THEN 1
-          WHEN Prioridade = 'media' THEN 2
-          WHEN Prioridade = N'média' THEN 2
-          WHEN Prioridade = 'alta' THEN 3
-          WHEN Prioridade = 'urgente' THEN 4
-          ELSE 2
-        END AS DECIMAL(6,2)
-      )) AS Media
-      FROM dbo.OcorrenciaVotos
-      WHERE OcorrenciaId = @id;
-    `);
+  const now = new Date().toISOString();
 
-  const media = Number(avg.recordset[0].Media || 2);
-  const novaPrioridade = priorityFromScore(media);
+  if (existing) {
+    existing.prioridade = prioridade;
+    existing.updatedAt = now;
+  } else {
+    db.votes.push({
+      occurrenceId: Number(id),
+      userId: req.user.id,
+      prioridade,
+      createdAt: now,
+      updatedAt: now
+    });
+  }
 
-  await db.request()
-    .input("id", sql.Int, id)
-    .input("prioridade", sql.NVarChar(30), novaPrioridade)
-    .input("score", sql.Decimal(6, 2), Number(media.toFixed(2)))
-    .query(`
-      UPDATE dbo.Ocorrencias
-      SET Prioridade = @prioridade,
-          PrioridadeScore = @score,
-          UpdatedAt = SYSUTCDATETIME()
-      WHERE Id = @id;
-    `);
+  const votes = db.votes.filter((vote) => String(vote.occurrenceId) === id);
+  const average = votes.length
+    ? votes.map((vote) => score(vote.prioridade)).reduce((a, b) => a + b, 0) / votes.length
+    : score(occurrence.prioridade);
 
-  res.json({ message: "Voto registrado com sucesso." });
-}));
+  occurrence.prioridadeScore = Number(average.toFixed(2));
+  occurrence.prioridade = priorityFromScore(average);
+  occurrence.updatedAt = now;
 
-app.get("/api/ocorrencias/ranking", asyncRoute(async (req, res) => {
-  const db = await getPool();
-
-  const result = await db.request().query(`
-    SELECT TOP 10 o.*, COUNT(v.UsuarioId) AS TotalVotos
-    FROM dbo.Ocorrencias o
-    LEFT JOIN dbo.OcorrenciaVotos v ON v.OcorrenciaId = o.Id
-    WHERE o.Status = 'aberta'
-    GROUP BY
-      o.Id, o.Titulo, o.Descricao, o.Categoria, o.Bairro, o.Endereco, o.Foto, o.Imagem,
-      o.Status, o.AdminStatus, o.Prioridade, o.PrioridadeScore, o.CreatedBy,
-      o.CreatedByName, o.CreatedAt, o.UpdatedAt, o.ApprovedAt, o.ApprovedBy,
-      o.RejectedAt, o.RejectedBy, o.RejectionReason
-    ORDER BY o.PrioridadeScore DESC, TotalVotos DESC, o.CreatedAt DESC;
-  `);
+  writeDb(db);
 
   res.json({
-    ranking: result.recordset.map(occurrenceSafe)
+    message: "Voto registrado com sucesso.",
+    ocorrencia: occurrenceSafe(occurrence, db)
   });
 }));
 
+app.get("/api/ocorrencias/ranking", asyncRoute(async (req, res) => {
+  const db = readDb();
+
+  const ranking = db.occurrences
+    .filter((item) => item.status === "aberta")
+    .map((item) => occurrenceSafe(item, db))
+    .sort((a, b) => {
+      return b.prioridadeScore - a.prioridadeScore ||
+        b.totalVotos - a.totalVotos ||
+        new Date(b.createdAt) - new Date(a.createdAt);
+    })
+    .slice(0, 10);
+
+  res.json({ ranking });
+}));
+
 app.get("/api/admin/ocorrencias", adminAuth, asyncRoute(async (req, res) => {
+  const db = readDb();
   const status = cleanText(req.query.status || "pendente");
 
-  const db = await getPool();
-
-  let where = "";
-
-  if (status !== "todas") {
-    where = "WHERE o.Status = @status";
-  }
-
-  const request = db.request();
-
-  if (status !== "todas") {
-    request.input("status", sql.NVarChar(30), status);
-  }
-
-  const result = await request.query(`
-    SELECT o.*, COUNT(v.UsuarioId) AS TotalVotos
-    FROM dbo.Ocorrencias o
-    LEFT JOIN dbo.OcorrenciaVotos v ON v.OcorrenciaId = o.Id
-    ${where}
-    GROUP BY
-      o.Id, o.Titulo, o.Descricao, o.Categoria, o.Bairro, o.Endereco, o.Foto, o.Imagem,
-      o.Status, o.AdminStatus, o.Prioridade, o.PrioridadeScore, o.CreatedBy,
-      o.CreatedByName, o.CreatedAt, o.UpdatedAt, o.ApprovedAt, o.ApprovedBy,
-      o.RejectedAt, o.RejectedBy, o.RejectionReason
-    ORDER BY o.CreatedAt DESC;
-  `);
-
-  const resumo = await db.request().query(`
-    SELECT
-      SUM(CASE WHEN Status = 'pendente' THEN 1 ELSE 0 END) AS Pendentes,
-      SUM(CASE WHEN Status = 'aberta' THEN 1 ELSE 0 END) AS Publicadas,
-      SUM(CASE WHEN Status = 'recusada' THEN 1 ELSE 0 END) AS Recusadas,
-      COUNT(*) AS Total
-    FROM dbo.Ocorrencias;
-  `);
-
-  const r = resumo.recordset[0] || {};
+  const filtered = db.occurrences
+    .filter((item) => status === "todas" ? true : item.status === status)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .map((item) => occurrenceSafe(item, db));
 
   res.json({
-    ocorrencias: result.recordset.map(occurrenceSafe),
+    ocorrencias: filtered,
     resumo: {
-      pendentes: Number(r.Pendentes || 0),
-      publicadas: Number(r.Publicadas || 0),
-      recusadas: Number(r.Recusadas || 0),
-      total: Number(r.Total || 0)
+      pendentes: db.occurrences.filter((item) => item.status === "pendente").length,
+      publicadas: db.occurrences.filter((item) => item.status === "aberta").length,
+      recusadas: db.occurrences.filter((item) => item.status === "recusada").length,
+      total: db.occurrences.length
     }
   });
 }));
 
 app.post("/api/admin/ocorrencias/:id/aprovar", adminAuth, asyncRoute(async (req, res) => {
-  const id = Number(req.params.id);
-  const db = await getPool();
+  const db = readDb();
+  const id = String(req.params.id);
+  const occurrence = db.occurrences.find((item) => String(item.id) === id);
 
-  const result = await db.request()
-    .input("id", sql.Int, id)
-    .query(`
-      UPDATE dbo.Ocorrencias
-      SET Status = 'aberta',
-          AdminStatus = 'aprovada',
-          ApprovedAt = SYSUTCDATETIME(),
-          ApprovedBy = N'Administrador',
-          RejectionReason = NULL,
-          UpdatedAt = SYSUTCDATETIME()
-      OUTPUT INSERTED.*
-      WHERE Id = @id;
-    `);
-
-  if (!result.recordset.length) {
+  if (!occurrence) {
     return res.status(404).json({ message: "Solicitação não encontrada." });
   }
 
+  occurrence.status = "aberta";
+  occurrence.adminStatus = "aprovada";
+  occurrence.approvedAt = new Date().toISOString();
+  occurrence.approvedBy = "Administrador";
+  occurrence.rejectionReason = "";
+  occurrence.updatedAt = new Date().toISOString();
+
+  writeDb(db);
+
   res.json({
     message: "Ocorrência aprovada e publicada.",
-    ocorrencia: occurrenceSafe(result.recordset[0])
+    ocorrencia: occurrenceSafe(occurrence, db)
   });
 }));
 
 app.post("/api/admin/ocorrencias/:id/recusar", adminAuth, asyncRoute(async (req, res) => {
-  const id = Number(req.params.id);
-  const motivo = cleanText(req.body.motivo || "Ocorrência recusada na moderação.");
-  const db = await getPool();
+  const db = readDb();
+  const id = String(req.params.id);
+  const occurrence = db.occurrences.find((item) => String(item.id) === id);
 
-  const result = await db.request()
-    .input("id", sql.Int, id)
-    .input("motivo", sql.NVarChar(sql.MAX), motivo)
-    .query(`
-      UPDATE dbo.Ocorrencias
-      SET Status = 'recusada',
-          AdminStatus = 'recusada',
-          RejectedAt = SYSUTCDATETIME(),
-          RejectedBy = N'Administrador',
-          RejectionReason = @motivo,
-          UpdatedAt = SYSUTCDATETIME()
-      OUTPUT INSERTED.*
-      WHERE Id = @id;
-    `);
-
-  if (!result.recordset.length) {
+  if (!occurrence) {
     return res.status(404).json({ message: "Solicitação não encontrada." });
   }
 
+  occurrence.status = "recusada";
+  occurrence.adminStatus = "recusada";
+  occurrence.rejectedAt = new Date().toISOString();
+  occurrence.rejectedBy = "Administrador";
+  occurrence.rejectionReason = cleanText(req.body.motivo || "Ocorrência recusada na moderação.");
+  occurrence.updatedAt = new Date().toISOString();
+
+  writeDb(db);
+
   res.json({
     message: "Ocorrência recusada.",
-    ocorrencia: occurrenceSafe(result.recordset[0])
+    ocorrencia: occurrenceSafe(occurrence, db)
   });
 }));
 
@@ -556,14 +500,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-getPool()
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`[Bairro Conectado] Backend SQL Server rodando em http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("Erro ao conectar ao SQL Server:");
-    console.error(err);
-    process.exit(1);
-  });
+ensureDb();
+
+app.listen(PORT, () => {
+  console.log(`[Bairro Conectado] Backend portátil rodando em http://localhost:${PORT}`);
+  console.log(`[Bairro Conectado] Banco local: ${dbFile}`);
+});

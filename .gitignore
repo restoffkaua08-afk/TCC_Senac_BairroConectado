@@ -50,3 +50,24 @@ node_modules/
 # .NET
 bin/
 obj/
+
+# Banco JSON local portátil
+backend/data/
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+
+# Ambiente local
+.env
+
+# Node
+node_modules/
+
+# .NET
+bin/
+obj/
+
+# Backups locais
+backup-*/
+**/backup-admin-moderacao-*/
+**/backup-fix-compilacao-*/
