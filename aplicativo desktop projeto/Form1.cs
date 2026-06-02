@@ -25,15 +25,12 @@ public partial class Form1 : Form
 
     private ComboBox cmbFiltro;
     private DataGridView grid;
-    private PictureBox picture;
-    private TextBox txtDetalhes;
 
     private Label lblPendentes;
     private Label lblPublicadas;
     private Label lblRecusadas;
     private Label lblTotal;
     private Label lblStatus;
-    private Label lblTituloDetalhe;
 
     private Button btnAtualizar;
     private Button btnAprovar;
@@ -70,7 +67,6 @@ public partial class Form1 : Form
         wrapper.Dock = DockStyle.Fill;
         wrapper.ColumnCount = 3;
         wrapper.RowCount = 3;
-        wrapper.BackColor = Color.Transparent;
         wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 460));
         wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
@@ -233,7 +229,7 @@ public partial class Form1 : Form
         main.Controls.Add(CriarHeader(), 0, 0);
         main.Controls.Add(CriarResumo(), 0, 1);
         main.Controls.Add(CriarToolbar(), 0, 2);
-        main.Controls.Add(CriarAreaTrabalho(), 0, 3);
+        main.Controls.Add(CriarGrid(), 0, 3);
 
         Controls.Add(main);
         AcceptButton = null;
@@ -391,26 +387,11 @@ public partial class Form1 : Form
         return bar;
     }
 
-    private Control CriarAreaTrabalho()
-    {
-        var split = new SplitContainer();
-        split.Dock = DockStyle.Fill;
-        split.Orientation = Orientation.Horizontal;
-        split.SplitterDistance = 330;
-        split.BackColor = Color.FromArgb(241, 245, 249);
-        split.Panel1.Padding = new Padding(0, 10, 0, 8);
-        split.Panel2.Padding = new Padding(0, 8, 0, 0);
-
-        split.Panel1.Controls.Add(CriarGrid());
-        split.Panel2.Controls.Add(CriarPainelDetalhes());
-
-        return split;
-    }
-
     private Control CriarGrid()
     {
         grid = new DataGridView();
         grid.Dock = DockStyle.Fill;
+        grid.Margin = new Padding(0, 10, 0, 0);
         grid.BackgroundColor = Color.White;
         grid.BorderStyle = BorderStyle.None;
         grid.AllowUserToAddRows = false;
@@ -421,7 +402,7 @@ public partial class Form1 : Form
         grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         grid.RowHeadersVisible = false;
         grid.EnableHeadersVisualStyles = false;
-        grid.ColumnHeadersHeight = 42;
+        grid.ColumnHeadersHeight = 44;
         grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
         grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
         grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
@@ -429,7 +410,7 @@ public partial class Form1 : Form
         grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
         grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
         grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
-        grid.RowTemplate.Height = 40;
+        grid.RowTemplate.Height = 42;
 
         grid.Columns.Add("Id", "Id");
         grid.Columns.Add("Titulo", "Título");
@@ -437,62 +418,42 @@ public partial class Form1 : Form
         grid.Columns.Add("Categoria", "Categoria");
         grid.Columns.Add("Prioridade", "Prioridade");
         grid.Columns.Add("Status", "Status");
+
+        var visualizar = new DataGridViewButtonColumn();
+        visualizar.Name = "Visualizar";
+        visualizar.HeaderText = "Ação";
+        visualizar.Text = "Visualizar";
+        visualizar.UseColumnTextForButtonValue = true;
+        visualizar.FlatStyle = FlatStyle.Flat;
+        grid.Columns.Add(visualizar);
+
         grid.Columns["Id"].Visible = false;
-        grid.Columns["Titulo"].FillWeight = 190;
+        grid.Columns["Titulo"].FillWeight = 210;
         grid.Columns["Bairro"].FillWeight = 110;
         grid.Columns["Categoria"].FillWeight = 110;
         grid.Columns["Prioridade"].FillWeight = 90;
         grid.Columns["Status"].FillWeight = 90;
+        grid.Columns["Visualizar"].FillWeight = 85;
 
-        grid.SelectionChanged += delegate { MostrarDetalhesSelecionado(); };
-        grid.CellDoubleClick += delegate { MostrarDetalhesSelecionado(); };
+        grid.CellContentClick += async delegate (object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            if (grid.Columns[e.ColumnIndex].Name == "Visualizar")
+            {
+                var item = ObterOcorrenciaDaLinha(e.RowIndex);
+                if (item != null) await AbrirJanelaOcorrenciaAsync(item);
+            }
+        };
+
+        grid.CellDoubleClick += async delegate (object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            var item = ObterOcorrenciaDaLinha(e.RowIndex);
+            if (item != null) await AbrirJanelaOcorrenciaAsync(item);
+        };
 
         return grid;
-    }
-
-    private Control CriarPainelDetalhes()
-    {
-        var painel = new TableLayoutPanel();
-        painel.Dock = DockStyle.Fill;
-        painel.BackColor = Color.White;
-        painel.Padding = new Padding(18);
-        painel.ColumnCount = 2;
-        painel.RowCount = 2;
-        painel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
-        painel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65));
-        painel.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
-        painel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-
-        lblTituloDetalhe = new Label();
-        lblTituloDetalhe.Text = "Detalhes da ocorrência selecionada";
-        lblTituloDetalhe.Dock = DockStyle.Fill;
-        lblTituloDetalhe.ForeColor = Color.FromArgb(15, 23, 42);
-        lblTituloDetalhe.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-        lblTituloDetalhe.TextAlign = ContentAlignment.MiddleLeft;
-
-        picture = new PictureBox();
-        picture.Dock = DockStyle.Fill;
-        picture.BackColor = Color.FromArgb(226, 232, 240);
-        picture.SizeMode = PictureBoxSizeMode.Zoom;
-        picture.Margin = new Padding(0, 8, 18, 0);
-
-        txtDetalhes = new TextBox();
-        txtDetalhes.Dock = DockStyle.Fill;
-        txtDetalhes.Multiline = true;
-        txtDetalhes.ReadOnly = true;
-        txtDetalhes.ScrollBars = ScrollBars.Vertical;
-        txtDetalhes.BackColor = Color.FromArgb(248, 250, 252);
-        txtDetalhes.ForeColor = Color.FromArgb(15, 23, 42);
-        txtDetalhes.BorderStyle = BorderStyle.FixedSingle;
-        txtDetalhes.Font = new Font("Consolas", 10.5F);
-        txtDetalhes.Margin = new Padding(0, 8, 0, 0);
-
-        painel.Controls.Add(lblTituloDetalhe, 0, 0);
-        painel.SetColumnSpan(lblTituloDetalhe, 2);
-        painel.Controls.Add(picture, 0, 1);
-        painel.Controls.Add(txtDetalhes, 1, 1);
-
-        return painel;
     }
 
     private Button CriarBotao(string texto, Color fundo, Color corTexto)
@@ -530,11 +491,7 @@ public partial class Form1 : Form
             if (btnAtualizar != null) btnAtualizar.Enabled = false;
             if (lblStatus != null) lblStatus.Text = "Carregando ocorrências...";
 
-            var request = new HttpRequestMessage(
-                HttpMethod.Get,
-                ApiBase + "/admin/ocorrencias?status=" + Uri.EscapeDataString(FiltroAtual())
-            );
-
+            var request = new HttpRequestMessage(HttpMethod.Get, ApiBase + "/admin/ocorrencias?status=" + Uri.EscapeDataString(FiltroAtual()));
             request.Headers.Add("X-Admin-Key", adminKey);
 
             var response = await http.SendAsync(request);
@@ -544,10 +501,7 @@ public partial class Form1 : Form
                 throw new Exception(ExtrairMensagemErro(json));
 
             var data = JsonConvert.DeserializeObject<AdminResponse>(json);
-
-            ocorrencias = data != null && data.Ocorrencias != null
-                ? data.Ocorrencias
-                : new List<Ocorrencia>();
+            ocorrencias = data != null && data.Ocorrencias != null ? data.Ocorrencias : new List<Ocorrencia>();
 
             AtualizarResumo(data != null ? data.Resumo : null);
             RenderizarGrid();
@@ -571,8 +525,7 @@ public partial class Form1 : Form
         try
         {
             var erro = JsonConvert.DeserializeObject<ApiError>(json);
-            if (erro != null && !string.IsNullOrWhiteSpace(erro.Message))
-                return erro.Message;
+            if (erro != null && !string.IsNullOrWhiteSpace(erro.Message)) return erro.Message;
         }
         catch { }
 
@@ -595,63 +548,177 @@ public partial class Form1 : Form
 
         foreach (var item in ocorrencias)
         {
-            grid.Rows.Add(
-                item.Id,
-                item.Titulo,
-                item.Bairro,
-                item.Categoria,
-                PrioridadeTexto(item.Prioridade),
-                StatusTexto(item.Status)
-            );
+            grid.Rows.Add(item.Id, item.Titulo, item.Bairro, item.Categoria, PrioridadeTexto(item.Prioridade), StatusTexto(item.Status));
         }
 
-        if (grid.Rows.Count > 0)
-            grid.Rows[0].Selected = true;
-
-        MostrarDetalhesSelecionado();
+        if (grid.Rows.Count > 0) grid.Rows[0].Selected = true;
     }
 
     private Ocorrencia Selecionada()
     {
         if (grid.SelectedRows.Count == 0) return null;
+        return ObterOcorrenciaDaLinha(grid.SelectedRows[0].Index);
+    }
 
-        string id = Convert.ToString(grid.SelectedRows[0].Cells["Id"].Value);
+    private Ocorrencia ObterOcorrenciaDaLinha(int rowIndex)
+    {
+        if (rowIndex < 0 || rowIndex >= grid.Rows.Count) return null;
+
+        string id = Convert.ToString(grid.Rows[rowIndex].Cells["Id"].Value);
 
         foreach (var item in ocorrencias)
         {
-            if (item.Id == id || item.MongoId == id)
-                return item;
+            if (item.Id == id || item.MongoId == id) return item;
         }
 
         return null;
     }
 
-    private void MostrarDetalhesSelecionado()
+    private async Task AbrirJanelaOcorrenciaAsync(Ocorrencia item)
     {
-        var item = Selecionada();
-
-        if (item == null)
+        using (var modal = new Form())
         {
-            lblTituloDetalhe.Text = "Detalhes da ocorrência selecionada";
-            txtDetalhes.Text = "Nenhuma ocorrência selecionada.";
-            picture.Image = null;
-            return;
+            modal.Text = "Visualizar ocorrência";
+            modal.StartPosition = FormStartPosition.CenterParent;
+            modal.Size = new Size(1080, 720);
+            modal.MinimumSize = new Size(940, 620);
+            modal.BackColor = Color.FromArgb(241, 245, 249);
+
+            var root = new TableLayoutPanel();
+            root.Dock = DockStyle.Fill;
+            root.Padding = new Padding(22);
+            root.ColumnCount = 1;
+            root.RowCount = 3;
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 70));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 66));
+
+            var titulo = new Label();
+            titulo.Text = item.Titulo ?? "Ocorrência";
+            titulo.Dock = DockStyle.Fill;
+            titulo.Font = new Font("Segoe UI", 20F, FontStyle.Bold);
+            titulo.ForeColor = Color.FromArgb(15, 23, 42);
+            titulo.TextAlign = ContentAlignment.MiddleLeft;
+
+            var conteudo = new TableLayoutPanel();
+            conteudo.Dock = DockStyle.Fill;
+            conteudo.ColumnCount = 2;
+            conteudo.RowCount = 1;
+            conteudo.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 45));
+            conteudo.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 55));
+
+            var boxImagem = new Panel();
+            boxImagem.Dock = DockStyle.Fill;
+            boxImagem.BackColor = Color.White;
+            boxImagem.Padding = new Padding(14);
+            boxImagem.Margin = new Padding(0, 0, 14, 0);
+
+            var pictureModal = new PictureBox();
+            pictureModal.Dock = DockStyle.Fill;
+            pictureModal.BackColor = Color.FromArgb(226, 232, 240);
+            pictureModal.SizeMode = PictureBoxSizeMode.Zoom;
+            pictureModal.Image = TentarCarregarImagem(item.Foto ?? item.Imagem);
+
+            if (pictureModal.Image == null)
+            {
+                pictureModal.Paint += delegate (object sender, PaintEventArgs e)
+                {
+                    string texto = "Imagem indisponível";
+                    using (var brush = new SolidBrush(Color.FromArgb(100, 116, 139)))
+                    using (var font = new Font("Segoe UI", 13F, FontStyle.Bold))
+                    {
+                        var size = e.Graphics.MeasureString(texto, font);
+                        e.Graphics.DrawString(texto, font, brush,
+                            (pictureModal.Width - size.Width) / 2,
+                            (pictureModal.Height - size.Height) / 2);
+                    }
+                };
+            }
+
+            boxImagem.Controls.Add(pictureModal);
+
+            var info = new RichTextBox();
+            info.Dock = DockStyle.Fill;
+            info.ReadOnly = true;
+            info.BorderStyle = BorderStyle.None;
+            info.BackColor = Color.White;
+            info.ForeColor = Color.FromArgb(15, 23, 42);
+            info.Font = new Font("Segoe UI", 11F);
+            info.Text = MontarTextoDetalhes(item);
+            info.Margin = new Padding(0);
+
+            conteudo.Controls.Add(boxImagem, 0, 0);
+            conteudo.Controls.Add(info, 1, 0);
+
+            var rodape = new FlowLayoutPanel();
+            rodape.Dock = DockStyle.Fill;
+            rodape.FlowDirection = FlowDirection.RightToLeft;
+            rodape.Padding = new Padding(0, 14, 0, 0);
+
+            var btnFechar = CriarBotaoModal("Fechar", Color.FromArgb(51, 65, 85), Color.White);
+            btnFechar.Click += delegate { modal.Close(); };
+            rodape.Controls.Add(btnFechar);
+
+            if (item.Status == "pendente")
+            {
+                var btnModalRecusar = CriarBotaoModal("Recusar", Color.FromArgb(153, 27, 27), Color.White);
+                btnModalRecusar.Click += async delegate
+                {
+                    string motivo = SolicitarMotivoRecusa();
+                    if (motivo == null) return;
+                    if (string.IsNullOrWhiteSpace(motivo)) motivo = "Ocorrência recusada pela administração.";
+                    if (await EnviarModeracaoAsync(item.Id, "recusar", motivo)) modal.Close();
+                };
+
+                var btnModalAprovar = CriarBotaoModal("Aprovar", Color.FromArgb(22, 101, 52), Color.White);
+                btnModalAprovar.Click += async delegate
+                {
+                    if (MessageBox.Show("Aprovar e publicar esta ocorrência?", "Confirmar aprovação", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                    if (await EnviarModeracaoAsync(item.Id, "aprovar", null)) modal.Close();
+                };
+
+                rodape.Controls.Add(btnModalRecusar);
+                rodape.Controls.Add(btnModalAprovar);
+            }
+
+            root.Controls.Add(titulo, 0, 0);
+            root.Controls.Add(conteudo, 0, 1);
+            root.Controls.Add(rodape, 0, 2);
+            modal.Controls.Add(root);
+
+            modal.ShowDialog(this);
+            await CarregarOcorrenciasAsync();
         }
+    }
 
-        lblTituloDetalhe.Text = item.Titulo ?? "Ocorrência selecionada";
+    private Button CriarBotaoModal(string texto, Color fundo, Color corTexto)
+    {
+        var btn = new Button();
+        btn.Text = texto;
+        btn.Width = 130;
+        btn.Height = 42;
+        btn.Margin = new Padding(10, 0, 0, 0);
+        btn.BackColor = fundo;
+        btn.ForeColor = corTexto;
+        btn.FlatStyle = FlatStyle.Flat;
+        btn.FlatAppearance.BorderSize = 0;
+        btn.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        btn.Cursor = Cursors.Hand;
+        return btn;
+    }
 
-        txtDetalhes.Text =
-            "ID: " + (item.Id ?? "") + "\r\n" +
-            "STATUS: " + StatusTexto(item.Status) + "\r\n" +
-            "PRIORIDADE: " + PrioridadeTexto(item.Prioridade) + "\r\n" +
-            "CATEGORIA: " + (item.Categoria ?? "Não informado") + "\r\n" +
-            "BAIRRO: " + (item.Bairro ?? "Não informado") + "\r\n" +
-            "ENDEREÇO: " + (item.Endereco ?? "Não informado") + "\r\n\r\n" +
-            "DESCRIÇÃO:\r\n" + (item.Descricao ?? "") + "\r\n\r\n" +
-            "ORIENTAÇÃO DE MODERAÇÃO:\r\n" +
+    private string MontarTextoDetalhes(Ocorrencia item)
+    {
+        return
+            "ID: " + (item.Id ?? "") + "\n\n" +
+            "STATUS\n" + StatusTexto(item.Status) + "\n\n" +
+            "PRIORIDADE\n" + PrioridadeTexto(item.Prioridade) + "\n\n" +
+            "CATEGORIA\n" + (item.Categoria ?? "Não informado") + "\n\n" +
+            "BAIRRO\n" + (item.Bairro ?? "Não informado") + "\n\n" +
+            "ENDEREÇO\n" + (item.Endereco ?? "Não informado") + "\n\n" +
+            "DESCRIÇÃO\n" + (item.Descricao ?? "") + "\n\n" +
+            "ORIENTAÇÃO\n" +
             "Aprove somente se a ocorrência tiver relação com o bairro, descrição compreensível e imagem adequada. Caso contrário, use Recusar e informe o motivo.";
-
-        picture.Image = TentarCarregarImagem(item.Foto ?? item.Imagem);
     }
 
     private Image TentarCarregarImagem(string value)
@@ -660,17 +727,14 @@ public partial class Form1 : Form
         {
             if (string.IsNullOrWhiteSpace(value)) return null;
 
-            if (value.StartsWith("data:image/svg", StringComparison.OrdinalIgnoreCase))
-                return null;
+            if (value.StartsWith("data:image/svg", StringComparison.OrdinalIgnoreCase)) return null;
 
             if (value.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
             {
                 int comma = value.IndexOf(',');
                 if (comma < 0) return null;
 
-                string base64 = value.Substring(comma + 1);
-                byte[] bytes = Convert.FromBase64String(base64);
-
+                byte[] bytes = Convert.FromBase64String(value.Substring(comma + 1));
                 using (var ms = new MemoryStream(bytes))
                 using (var img = Image.FromStream(ms))
                 {
@@ -678,11 +742,11 @@ public partial class Form1 : Form
                 }
             }
 
-            if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-                value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
             {
-                using (var stream = http.GetStreamAsync(value).GetAwaiter().GetResult())
-                using (var img = Image.FromStream(stream))
+                byte[] bytes = http.GetByteArrayAsync(value).GetAwaiter().GetResult();
+                using (var ms = new MemoryStream(bytes))
+                using (var img = Image.FromStream(ms))
                 {
                     return new Bitmap(img);
                 }
@@ -709,8 +773,7 @@ public partial class Form1 : Form
             return;
         }
 
-        if (MessageBox.Show("Aprovar e publicar esta ocorrência?", "Confirmar aprovação", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
-            return;
+        if (MessageBox.Show("Aprovar e publicar esta ocorrência?", "Confirmar aprovação", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
         await EnviarModeracaoAsync(item.Id, "aprovar", null);
     }
@@ -732,50 +795,35 @@ public partial class Form1 : Form
         }
 
         string motivo = SolicitarMotivoRecusa();
-
         if (motivo == null) return;
-
-        if (string.IsNullOrWhiteSpace(motivo))
-            motivo = "Ocorrência recusada pela administração.";
+        if (string.IsNullOrWhiteSpace(motivo)) motivo = "Ocorrência recusada pela administração.";
 
         await EnviarModeracaoAsync(item.Id, "recusar", motivo);
     }
 
-    private async Task EnviarModeracaoAsync(string id, string acao, string motivo)
+    private async Task<bool> EnviarModeracaoAsync(string id, string acao, string motivo)
     {
         try
         {
-            var request = new HttpRequestMessage(
-                HttpMethod.Post,
-                ApiBase + "/admin/ocorrencias/" + Uri.EscapeDataString(id) + "/" + acao
-            );
-
+            var request = new HttpRequestMessage(HttpMethod.Post, ApiBase + "/admin/ocorrencias/" + Uri.EscapeDataString(id) + "/" + acao);
             request.Headers.Add("X-Admin-Key", adminKey);
 
-            string payload = motivo == null
-                ? "{}"
-                : JsonConvert.SerializeObject(new { motivo = motivo });
-
+            string payload = motivo == null ? "{}" : JsonConvert.SerializeObject(new { motivo = motivo });
             request.Content = new StringContent(payload, Encoding.UTF8, "application/json");
 
             var response = await http.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
 
-            if (!response.IsSuccessStatusCode)
-                throw new Exception(ExtrairMensagemErro(json));
+            if (!response.IsSuccessStatusCode) throw new Exception(ExtrairMensagemErro(json));
 
-            MessageBox.Show(
-                acao == "aprovar" ? "Ocorrência aprovada e publicada." : "Ocorrência recusada.",
-                "Moderação concluída",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
-
+            MessageBox.Show(acao == "aprovar" ? "Ocorrência aprovada e publicada." : "Ocorrência recusada.", "Moderação concluída", MessageBoxButtons.OK, MessageBoxIcon.Information);
             await CarregarOcorrenciasAsync();
+            return true;
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "Erro na moderação", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return false;
         }
     }
 
