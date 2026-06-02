@@ -71,7 +71,7 @@ public partial class Form1 : Form
         wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 460));
         wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         wrapper.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        wrapper.RowStyles.Add(new RowStyle(SizeType.Absolute, 430));
+        wrapper.RowStyles.Add(new RowStyle(SizeType.Absolute, 410));
         wrapper.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
         var card = new Panel();
@@ -95,7 +95,7 @@ public partial class Form1 : Form
 
         var lblId = CriarLabelCampo("Número de identificação");
         txtIdentificacao = CriarInput(false);
-        txtIdentificacao.PlaceholderText = "Ex: ADMIN-001";
+        txtIdentificacao.PlaceholderText = "Seu número de identificação";
 
         var lblSenha = CriarLabelCampo("Senha de acesso");
         txtSenha = CriarInput(true);
@@ -114,10 +114,10 @@ public partial class Form1 : Form
         btnEntrar.Click += async delegate { await TentarLoginAsync(); };
 
         lblLoginStatus = new Label();
-        lblLoginStatus.Text = "Backend esperado: http://localhost:3000";
-        lblLoginStatus.ForeColor = Color.FromArgb(100, 116, 139);
+        lblLoginStatus.Text = "";
+        lblLoginStatus.ForeColor = Color.FromArgb(185, 28, 28);
         lblLoginStatus.Dock = DockStyle.Top;
-        lblLoginStatus.Height = 48;
+        lblLoginStatus.Height = 30;
         lblLoginStatus.TextAlign = ContentAlignment.MiddleCenter;
 
         card.Controls.Add(lblLoginStatus);
@@ -221,7 +221,7 @@ public partial class Form1 : Form
         main.Padding = new Padding(24);
         main.RowCount = 4;
         main.ColumnCount = 1;
-        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 106));
         main.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
         main.RowStyles.Add(new RowStyle(SizeType.Absolute, 68));
         main.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -242,11 +242,11 @@ public partial class Form1 : Form
         header.ColumnCount = 4;
         header.RowCount = 1;
         header.BackColor = Color.FromArgb(15, 23, 42);
-        header.Padding = new Padding(20, 14, 20, 14);
+        header.Padding = new Padding(20, 12, 20, 12);
         header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
-        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 180));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 165));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
 
         var bloco = new Panel();
         bloco.Dock = DockStyle.Fill;
@@ -254,14 +254,14 @@ public partial class Form1 : Form
         var titulo = new Label();
         titulo.Text = "Administração de ocorrências";
         titulo.Dock = DockStyle.Top;
-        titulo.Height = 32;
+        titulo.Height = 34;
         titulo.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
         titulo.ForeColor = Color.White;
 
         lblStatus = new Label();
         lblStatus.Text = "Operador: " + adminIdentificacao;
         lblStatus.Dock = DockStyle.Top;
-        lblStatus.Height = 24;
+        lblStatus.Height = 26;
         lblStatus.ForeColor = Color.FromArgb(203, 213, 225);
 
         bloco.Controls.Add(lblStatus);
@@ -304,43 +304,39 @@ public partial class Form1 : Form
         for (int i = 0; i < 4; i++)
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
 
-        lblPendentes = CriarResumoCard(table, "Pendentes", 0, Color.FromArgb(234, 179, 8));
-        lblPublicadas = CriarResumoCard(table, "Publicadas", 1, Color.FromArgb(22, 163, 74));
-        lblRecusadas = CriarResumoCard(table, "Recusadas", 2, Color.FromArgb(220, 38, 38));
-        lblTotal = CriarResumoCard(table, "Total", 3, Color.FromArgb(37, 99, 235));
+        lblPendentes = CriarResumoCard(table, "Pendentes", 0, Color.FromArgb(255, 253, 235));
+        lblPublicadas = CriarResumoCard(table, "Publicadas", 1, Color.FromArgb(242, 253, 247));
+        lblRecusadas = CriarResumoCard(table, "Recusadas", 2, Color.FromArgb(255, 245, 245));
+        lblTotal = CriarResumoCard(table, "Total", 3, Color.FromArgb(244, 248, 255));
 
         return table;
     }
 
-    private Label CriarResumoCard(TableLayoutPanel table, string titulo, int coluna, Color cor)
+    private Label CriarResumoCard(TableLayoutPanel table, string titulo, int coluna, Color fundo)
     {
         var panel = new Panel();
         panel.Dock = DockStyle.Fill;
-        panel.BackColor = Color.White;
-        panel.Padding = new Padding(16, 10, 16, 10);
+        panel.BackColor = fundo;
+        panel.Padding = new Padding(18, 10, 18, 10);
         panel.Margin = new Padding(coluna == 0 ? 0 : 8, 0, coluna == 3 ? 0 : 8, 0);
-
-        var borda = new Panel();
-        borda.Width = 6;
-        borda.Dock = DockStyle.Left;
-        borda.BackColor = cor;
 
         var lbl = new Label();
         lbl.Text = titulo.ToUpperInvariant();
-        lbl.ForeColor = Color.FromArgb(100, 116, 139);
+        lbl.ForeColor = Color.FromArgb(71, 85, 105);
         lbl.Font = new Font("Segoe UI", 8.5F, FontStyle.Bold);
         lbl.Dock = DockStyle.Top;
         lbl.Height = 22;
+        lbl.BackColor = Color.Transparent;
 
         var valor = new Label();
         valor.Text = "0";
         valor.ForeColor = Color.FromArgb(15, 23, 42);
         valor.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
         valor.Dock = DockStyle.Fill;
+        valor.BackColor = Color.Transparent;
 
         panel.Controls.Add(valor);
         panel.Controls.Add(lbl);
-        panel.Controls.Add(borda);
 
         table.Controls.Add(panel, coluna, 0);
         return valor;
@@ -461,7 +457,7 @@ public partial class Form1 : Form
         var btn = new Button();
         btn.Text = texto;
         btn.Dock = DockStyle.Fill;
-        btn.Margin = new Padding(8, 0, 0, 0);
+        btn.Margin = new Padding(8, 4, 0, 4);
         btn.BackColor = fundo;
         btn.ForeColor = corTexto;
         btn.FlatStyle = FlatStyle.Flat;
