@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -12,9 +12,17 @@ using Newtonsoft.Json;
 public partial class Form1 : Form
 {
     private const string ApiBase = "http://localhost:3000/api";
+    private const string PortalUrl = "http://localhost:3000/ocorrencias.html";
+
     private readonly HttpClient http = new HttpClient();
 
-    private TextBox txtAdminKey;
+    private string adminKey = "";
+    private string adminIdentificacao = "";
+
+    private TextBox txtIdentificacao;
+    private TextBox txtSenha;
+    private Label lblLoginStatus;
+
     private ComboBox cmbFiltro;
     private DataGridView grid;
     private PictureBox picture;
@@ -25,6 +33,7 @@ public partial class Form1 : Form
     private Label lblRecusadas;
     private Label lblTotal;
     private Label lblStatus;
+    private Label lblTituloDetalhe;
 
     private Button btnAtualizar;
     private Button btnAprovar;
@@ -35,172 +44,257 @@ public partial class Form1 : Form
     public Form1()
     {
         InitializeComponent();
-        ConstruirInterface();
-        Load += async delegate { await CarregarOcorrenciasAsync(); };
+        ConfigurarJanela();
+        MostrarLogin();
     }
 
-    private void ConstruirInterface()
+    private void ConfigurarJanela()
     {
-        Text = "Bairro Conectado - Administração de Ocorrências";
+        Text = "Bairro Conectado - Administração";
         WindowState = FormWindowState.Maximized;
-        MinimumSize = new Size(1180, 720);
-        BackColor = Color.FromArgb(244, 247, 251);
+        MinimumSize = new Size(1180, 740);
+        BackColor = Color.FromArgb(241, 245, 249);
         Font = new Font("Segoe UI", 10F);
+    }
 
+    private void MostrarLogin()
+    {
         Controls.Clear();
 
-        var shell = new SplitContainer();
-        shell.Dock = DockStyle.Fill;
-        shell.FixedPanel = FixedPanel.Panel1;
-        shell.SplitterDistance = 300;
-        shell.IsSplitterFixed = false;
-        shell.BackColor = Color.FromArgb(244, 247, 251);
+        var root = new Panel();
+        root.Dock = DockStyle.Fill;
+        root.BackColor = Color.FromArgb(15, 23, 42);
+        root.Padding = new Padding(32);
 
-        shell.Panel1.Controls.Add(CriarSidebar());
-        shell.Panel2.Controls.Add(CriarConteudo());
+        var wrapper = new TableLayoutPanel();
+        wrapper.Dock = DockStyle.Fill;
+        wrapper.ColumnCount = 3;
+        wrapper.RowCount = 3;
+        wrapper.BackColor = Color.Transparent;
+        wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 460));
+        wrapper.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+        wrapper.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        wrapper.RowStyles.Add(new RowStyle(SizeType.Absolute, 430));
+        wrapper.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
-        Controls.Add(shell);
-    }
-
-    private Control CriarSidebar()
-    {
-        var panel = new Panel();
-        panel.Dock = DockStyle.Fill;
-        panel.BackColor = Color.FromArgb(15, 23, 42);
-        panel.Padding = new Padding(24);
+        var card = new Panel();
+        card.Dock = DockStyle.Fill;
+        card.BackColor = Color.White;
+        card.Padding = new Padding(34);
 
         var titulo = new Label();
-        titulo.Text = "Bairro\nConectado";
-        titulo.ForeColor = Color.White;
+        titulo.Text = "Painel Administrativo";
+        titulo.ForeColor = Color.FromArgb(15, 23, 42);
         titulo.Font = new Font("Segoe UI", 25F, FontStyle.Bold);
         titulo.Dock = DockStyle.Top;
-        titulo.Height = 100;
+        titulo.Height = 48;
 
         var subtitulo = new Label();
-        subtitulo.Text = "Painel desktop administrativo";
-        subtitulo.ForeColor = Color.FromArgb(203, 213, 225);
+        subtitulo.Text = "Entre para validar, aprovar e recusar ocorrências enviadas pelos moradores.";
+        subtitulo.ForeColor = Color.FromArgb(71, 85, 105);
+        subtitulo.Font = new Font("Segoe UI", 10.5F);
         subtitulo.Dock = DockStyle.Top;
-        subtitulo.Height = 40;
+        subtitulo.Height = 58;
 
-        var fluxo = new Label();
-        fluxo.Text =
-            "Fluxo de publicação:\n\n" +
-            "1. O morador cadastra uma ocorrência no site.\n\n" +
-            "2. A ocorrência entra como pendente.\n\n" +
-            "3. O administrador confere imagem, texto, bairro, endereço e prioridade.\n\n" +
-            "4. Se aprovar, aparece no portal público.\n\n" +
-            "5. Se recusar, fica bloqueada.";
-        fluxo.ForeColor = Color.FromArgb(226, 232, 240);
-        fluxo.BackColor = Color.FromArgb(30, 41, 59);
-        fluxo.Padding = new Padding(16);
-        fluxo.Dock = DockStyle.Top;
-        fluxo.Height = 350;
+        var lblId = CriarLabelCampo("Número de identificação");
+        txtIdentificacao = CriarInput(false);
+        txtIdentificacao.PlaceholderText = "Ex: ADMIN-001";
 
-        var abrirSite = new Button();
-        abrirSite.Text = "Abrir portal público";
-        abrirSite.Height = 46;
-        abrirSite.Dock = DockStyle.Bottom;
-        abrirSite.BackColor = Color.White;
-        abrirSite.ForeColor = Color.FromArgb(15, 23, 42);
-        abrirSite.FlatStyle = FlatStyle.Flat;
-        abrirSite.FlatAppearance.BorderSize = 0;
-        abrirSite.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-        abrirSite.Cursor = Cursors.Hand;
-        abrirSite.Click += delegate
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "http://localhost:3000/ocorrencias.html",
-                UseShellExecute = true
-            });
-        };
+        var lblSenha = CriarLabelCampo("Senha de acesso");
+        txtSenha = CriarInput(true);
+        txtSenha.PlaceholderText = "Digite a senha administrativa";
 
-        panel.Controls.Add(abrirSite);
-        panel.Controls.Add(fluxo);
-        panel.Controls.Add(subtitulo);
-        panel.Controls.Add(titulo);
+        var btnEntrar = new Button();
+        btnEntrar.Text = "Entrar no painel";
+        btnEntrar.Height = 48;
+        btnEntrar.Dock = DockStyle.Top;
+        btnEntrar.BackColor = Color.FromArgb(37, 99, 235);
+        btnEntrar.ForeColor = Color.White;
+        btnEntrar.FlatStyle = FlatStyle.Flat;
+        btnEntrar.FlatAppearance.BorderSize = 0;
+        btnEntrar.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+        btnEntrar.Cursor = Cursors.Hand;
+        btnEntrar.Click += async delegate { await TentarLoginAsync(); };
 
-        return panel;
+        lblLoginStatus = new Label();
+        lblLoginStatus.Text = "Backend esperado: http://localhost:3000";
+        lblLoginStatus.ForeColor = Color.FromArgb(100, 116, 139);
+        lblLoginStatus.Dock = DockStyle.Top;
+        lblLoginStatus.Height = 48;
+        lblLoginStatus.TextAlign = ContentAlignment.MiddleCenter;
+
+        card.Controls.Add(lblLoginStatus);
+        card.Controls.Add(btnEntrar);
+        card.Controls.Add(Espaco(18));
+        card.Controls.Add(txtSenha);
+        card.Controls.Add(lblSenha);
+        card.Controls.Add(Espaco(12));
+        card.Controls.Add(txtIdentificacao);
+        card.Controls.Add(lblId);
+        card.Controls.Add(Espaco(18));
+        card.Controls.Add(subtitulo);
+        card.Controls.Add(titulo);
+
+        wrapper.Controls.Add(card, 1, 1);
+        root.Controls.Add(wrapper);
+        Controls.Add(root);
+
+        AcceptButton = btnEntrar;
+        txtIdentificacao.Focus();
     }
 
-    private Control CriarConteudo()
+    private Label CriarLabelCampo(string texto)
     {
+        var label = new Label();
+        label.Text = texto;
+        label.Dock = DockStyle.Top;
+        label.Height = 28;
+        label.ForeColor = Color.FromArgb(30, 41, 59);
+        label.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+        label.TextAlign = ContentAlignment.BottomLeft;
+        return label;
+    }
+
+    private TextBox CriarInput(bool senha)
+    {
+        var input = new TextBox();
+        input.Dock = DockStyle.Top;
+        input.Height = 38;
+        input.BorderStyle = BorderStyle.FixedSingle;
+        input.Font = new Font("Segoe UI", 12F);
+        input.UseSystemPasswordChar = senha;
+        return input;
+    }
+
+    private Control Espaco(int altura)
+    {
+        return new Panel { Dock = DockStyle.Top, Height = altura, BackColor = Color.Transparent };
+    }
+
+    private async Task TentarLoginAsync()
+    {
+        string identificacao = (txtIdentificacao.Text ?? "").Trim();
+        string senha = (txtSenha.Text ?? "").Trim();
+
+        if (string.IsNullOrWhiteSpace(identificacao) || string.IsNullOrWhiteSpace(senha))
+        {
+            lblLoginStatus.Text = "Informe identificação e senha.";
+            lblLoginStatus.ForeColor = Color.FromArgb(185, 28, 28);
+            return;
+        }
+
+        adminIdentificacao = identificacao;
+        adminKey = senha;
+        lblLoginStatus.Text = "Verificando acesso administrativo...";
+        lblLoginStatus.ForeColor = Color.FromArgb(37, 99, 235);
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, ApiBase + "/admin/ocorrencias?status=todas");
+            request.Headers.Add("X-Admin-Key", adminKey);
+            var response = await http.SendAsync(request);
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception(ExtrairMensagemErro(json));
+
+            ConstruirPainel();
+            await CarregarOcorrenciasAsync();
+        }
+        catch (Exception ex)
+        {
+            lblLoginStatus.Text = "Acesso negado ou backend offline.";
+            lblLoginStatus.ForeColor = Color.FromArgb(185, 28, 28);
+            MessageBox.Show(
+                ex.Message + "\n\nVerifique se o backend Node está rodando em http://localhost:3000 e se a senha é a mesma ADMIN_KEY do arquivo .env.",
+                "Erro no login administrativo",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+            );
+        }
+    }
+
+    private void ConstruirPainel()
+    {
+        Controls.Clear();
+
         var main = new TableLayoutPanel();
         main.Dock = DockStyle.Fill;
-        main.Padding = new Padding(28);
-        main.RowCount = 5;
+        main.BackColor = Color.FromArgb(241, 245, 249);
+        main.Padding = new Padding(24);
+        main.RowCount = 4;
         main.ColumnCount = 1;
-        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 170));
-        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 96));
-        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 72));
-        main.RowStyles.Add(new RowStyle(SizeType.Percent, 62));
-        main.RowStyles.Add(new RowStyle(SizeType.Percent, 38));
+        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+        main.RowStyles.Add(new RowStyle(SizeType.Absolute, 68));
+        main.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-        main.Controls.Add(CriarHero(), 0, 0);
+        main.Controls.Add(CriarHeader(), 0, 0);
         main.Controls.Add(CriarResumo(), 0, 1);
         main.Controls.Add(CriarToolbar(), 0, 2);
-        main.Controls.Add(CriarGrid(), 0, 3);
-        main.Controls.Add(CriarDetalhes(), 0, 4);
+        main.Controls.Add(CriarAreaTrabalho(), 0, 3);
 
-        return main;
+        Controls.Add(main);
+        AcceptButton = null;
     }
 
-    private Control CriarHero()
+    private Control CriarHeader()
     {
-        var hero = new Panel();
-        hero.Dock = DockStyle.Fill;
-        hero.BackColor = Color.FromArgb(15, 23, 42);
-        hero.Padding = new Padding(26);
-        hero.Margin = new Padding(0, 0, 0, 16);
+        var header = new TableLayoutPanel();
+        header.Dock = DockStyle.Fill;
+        header.ColumnCount = 4;
+        header.RowCount = 1;
+        header.BackColor = Color.FromArgb(15, 23, 42);
+        header.Padding = new Padding(20, 14, 20, 14);
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+        header.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+
+        var bloco = new Panel();
+        bloco.Dock = DockStyle.Fill;
 
         var titulo = new Label();
-        titulo.Text = "Validação de ocorrências";
-        titulo.ForeColor = Color.White;
-        titulo.Font = new Font("Segoe UI", 28F, FontStyle.Bold);
+        titulo.Text = "Administração de ocorrências";
         titulo.Dock = DockStyle.Top;
-        titulo.Height = 58;
-
-        var texto = new Label();
-        texto.Text = "Revise as solicitações enviadas pelos moradores antes de publicar no portal. Este painel evita imagens indevidas, textos ofensivos e registros sem relação com o bairro.";
-        texto.ForeColor = Color.FromArgb(219, 234, 254);
-        texto.Dock = DockStyle.Top;
-        texto.Height = 48;
-
-        var linha = new FlowLayoutPanel();
-        linha.Dock = DockStyle.Bottom;
-        linha.Height = 42;
-        linha.FlowDirection = FlowDirection.LeftToRight;
-        linha.WrapContents = false;
-
-        var lbl = new Label();
-        lbl.Text = "Código admin:";
-        lbl.ForeColor = Color.White;
-        lbl.Width = 110;
-        lbl.Height = 32;
-        lbl.TextAlign = ContentAlignment.MiddleLeft;
-        lbl.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
-
-        txtAdminKey = new TextBox();
-        txtAdminKey.Width = 260;
-        txtAdminKey.UseSystemPasswordChar = true;
-        txtAdminKey.Text = "bairro-admin-2026";
+        titulo.Height = 32;
+        titulo.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+        titulo.ForeColor = Color.White;
 
         lblStatus = new Label();
-        lblStatus.Text = "Backend: http://localhost:3000";
+        lblStatus.Text = "Operador: " + adminIdentificacao;
+        lblStatus.Dock = DockStyle.Top;
+        lblStatus.Height = 24;
         lblStatus.ForeColor = Color.FromArgb(203, 213, 225);
-        lblStatus.Width = 450;
-        lblStatus.Height = 32;
-        lblStatus.TextAlign = ContentAlignment.MiddleLeft;
 
-        linha.Controls.Add(lbl);
-        linha.Controls.Add(txtAdminKey);
-        linha.Controls.Add(lblStatus);
+        bloco.Controls.Add(lblStatus);
+        bloco.Controls.Add(titulo);
 
-        hero.Controls.Add(linha);
-        hero.Controls.Add(texto);
-        hero.Controls.Add(titulo);
+        var btnAbrirSite = CriarBotao("Abrir site", Color.White, Color.FromArgb(15, 23, 42));
+        btnAbrirSite.Click += delegate
+        {
+            Process.Start(new ProcessStartInfo { FileName = PortalUrl, UseShellExecute = true });
+        };
 
-        return hero;
+        btnAtualizar = CriarBotao("Atualizar", Color.FromArgb(37, 99, 235), Color.White);
+        btnAtualizar.Click += async delegate { await CarregarOcorrenciasAsync(); };
+
+        var btnSair = CriarBotao("Sair", Color.FromArgb(51, 65, 85), Color.White);
+        btnSair.Click += delegate
+        {
+            adminKey = "";
+            adminIdentificacao = "";
+            ocorrencias.Clear();
+            MostrarLogin();
+        };
+
+        header.Controls.Add(bloco, 0, 0);
+        header.Controls.Add(btnAbrirSite, 1, 0);
+        header.Controls.Add(btnAtualizar, 2, 0);
+        header.Controls.Add(btnSair, 3, 0);
+
+        return header;
     }
 
     private Control CriarResumo()
@@ -209,26 +303,31 @@ public partial class Form1 : Form
         table.Dock = DockStyle.Fill;
         table.ColumnCount = 4;
         table.RowCount = 1;
-        table.Margin = new Padding(0, 0, 0, 16);
+        table.Margin = new Padding(0, 14, 0, 10);
 
         for (int i = 0; i < 4; i++)
             table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
 
-        lblPendentes = CriarResumoCard(table, "Pendentes", 0);
-        lblPublicadas = CriarResumoCard(table, "Publicadas", 1);
-        lblRecusadas = CriarResumoCard(table, "Recusadas", 2);
-        lblTotal = CriarResumoCard(table, "Total", 3);
+        lblPendentes = CriarResumoCard(table, "Pendentes", 0, Color.FromArgb(234, 179, 8));
+        lblPublicadas = CriarResumoCard(table, "Publicadas", 1, Color.FromArgb(22, 163, 74));
+        lblRecusadas = CriarResumoCard(table, "Recusadas", 2, Color.FromArgb(220, 38, 38));
+        lblTotal = CriarResumoCard(table, "Total", 3, Color.FromArgb(37, 99, 235));
 
         return table;
     }
 
-    private Label CriarResumoCard(TableLayoutPanel table, string titulo, int coluna)
+    private Label CriarResumoCard(TableLayoutPanel table, string titulo, int coluna, Color cor)
     {
         var panel = new Panel();
         panel.Dock = DockStyle.Fill;
         panel.BackColor = Color.White;
-        panel.Padding = new Padding(16);
+        panel.Padding = new Padding(16, 10, 16, 10);
         panel.Margin = new Padding(coluna == 0 ? 0 : 8, 0, coluna == 3 ? 0 : 8, 0);
+
+        var borda = new Panel();
+        borda.Width = 6;
+        borda.Dock = DockStyle.Left;
+        borda.BackColor = cor;
 
         var lbl = new Label();
         lbl.Text = titulo.ToUpperInvariant();
@@ -245,6 +344,7 @@ public partial class Form1 : Form
 
         panel.Controls.Add(valor);
         panel.Controls.Add(lbl);
+        panel.Controls.Add(borda);
 
         table.Controls.Add(panel, coluna, 0);
         return valor;
@@ -255,21 +355,18 @@ public partial class Form1 : Form
         var bar = new TableLayoutPanel();
         bar.Dock = DockStyle.Fill;
         bar.BackColor = Color.White;
-        bar.Padding = new Padding(16);
-        bar.ColumnCount = 5;
+        bar.Padding = new Padding(14);
+        bar.ColumnCount = 4;
         bar.RowCount = 1;
-        bar.Margin = new Padding(0, 0, 0, 16);
-
         bar.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210));
-        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
-        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
-        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
+        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220));
+        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+        bar.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
 
         var titulo = new Label();
-        titulo.Text = "Solicitações de ocorrências";
+        titulo.Text = "Fila de moderação";
         titulo.ForeColor = Color.FromArgb(15, 23, 42);
-        titulo.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
+        titulo.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
         titulo.Dock = DockStyle.Fill;
         titulo.TextAlign = ContentAlignment.MiddleLeft;
 
@@ -280,9 +377,6 @@ public partial class Form1 : Form
         cmbFiltro.Dock = DockStyle.Fill;
         cmbFiltro.SelectedIndexChanged += async delegate { await CarregarOcorrenciasAsync(); };
 
-        btnAtualizar = CriarBotao("Atualizar", Color.FromArgb(15, 23, 42), Color.White);
-        btnAtualizar.Click += async delegate { await CarregarOcorrenciasAsync(); };
-
         btnAprovar = CriarBotao("Aprovar", Color.FromArgb(22, 101, 52), Color.White);
         btnAprovar.Click += async delegate { await AprovarSelecionadaAsync(); };
 
@@ -291,11 +385,26 @@ public partial class Form1 : Form
 
         bar.Controls.Add(titulo, 0, 0);
         bar.Controls.Add(cmbFiltro, 1, 0);
-        bar.Controls.Add(btnAtualizar, 2, 0);
-        bar.Controls.Add(btnAprovar, 3, 0);
-        bar.Controls.Add(btnRecusar, 4, 0);
+        bar.Controls.Add(btnAprovar, 2, 0);
+        bar.Controls.Add(btnRecusar, 3, 0);
 
         return bar;
+    }
+
+    private Control CriarAreaTrabalho()
+    {
+        var split = new SplitContainer();
+        split.Dock = DockStyle.Fill;
+        split.Orientation = Orientation.Horizontal;
+        split.SplitterDistance = 330;
+        split.BackColor = Color.FromArgb(241, 245, 249);
+        split.Panel1.Padding = new Padding(0, 10, 0, 8);
+        split.Panel2.Padding = new Padding(0, 8, 0, 0);
+
+        split.Panel1.Controls.Add(CriarGrid());
+        split.Panel2.Controls.Add(CriarPainelDetalhes());
+
+        return split;
     }
 
     private Control CriarGrid()
@@ -312,12 +421,15 @@ public partial class Form1 : Form
         grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         grid.RowHeadersVisible = false;
         grid.EnableHeadersVisualStyles = false;
+        grid.ColumnHeadersHeight = 42;
         grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(15, 23, 42);
         grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9.5F, FontStyle.Bold);
+        grid.DefaultCellStyle.Font = new Font("Segoe UI", 10F);
         grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
         grid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
-        grid.RowTemplate.Height = 36;
+        grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+        grid.RowTemplate.Height = 40;
 
         grid.Columns.Add("Id", "Id");
         grid.Columns.Add("Titulo", "Título");
@@ -326,39 +438,61 @@ public partial class Form1 : Form
         grid.Columns.Add("Prioridade", "Prioridade");
         grid.Columns.Add("Status", "Status");
         grid.Columns["Id"].Visible = false;
+        grid.Columns["Titulo"].FillWeight = 190;
+        grid.Columns["Bairro"].FillWeight = 110;
+        grid.Columns["Categoria"].FillWeight = 110;
+        grid.Columns["Prioridade"].FillWeight = 90;
+        grid.Columns["Status"].FillWeight = 90;
 
         grid.SelectionChanged += delegate { MostrarDetalhesSelecionado(); };
+        grid.CellDoubleClick += delegate { MostrarDetalhesSelecionado(); };
 
         return grid;
     }
 
-    private Control CriarDetalhes()
+    private Control CriarPainelDetalhes()
     {
-        var split = new SplitContainer();
-        split.Dock = DockStyle.Fill;
-        split.Orientation = Orientation.Vertical;
-        split.SplitterDistance = 330;
-        split.BackColor = Color.FromArgb(244, 247, 251);
-        split.Margin = new Padding(0, 16, 0, 0);
+        var painel = new TableLayoutPanel();
+        painel.Dock = DockStyle.Fill;
+        painel.BackColor = Color.White;
+        painel.Padding = new Padding(18);
+        painel.ColumnCount = 2;
+        painel.RowCount = 2;
+        painel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
+        painel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 65));
+        painel.RowStyles.Add(new RowStyle(SizeType.Absolute, 38));
+        painel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+        lblTituloDetalhe = new Label();
+        lblTituloDetalhe.Text = "Detalhes da ocorrência selecionada";
+        lblTituloDetalhe.Dock = DockStyle.Fill;
+        lblTituloDetalhe.ForeColor = Color.FromArgb(15, 23, 42);
+        lblTituloDetalhe.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+        lblTituloDetalhe.TextAlign = ContentAlignment.MiddleLeft;
 
         picture = new PictureBox();
         picture.Dock = DockStyle.Fill;
         picture.BackColor = Color.FromArgb(226, 232, 240);
         picture.SizeMode = PictureBoxSizeMode.Zoom;
+        picture.Margin = new Padding(0, 8, 18, 0);
 
         txtDetalhes = new TextBox();
         txtDetalhes.Dock = DockStyle.Fill;
         txtDetalhes.Multiline = true;
         txtDetalhes.ReadOnly = true;
         txtDetalhes.ScrollBars = ScrollBars.Vertical;
-        txtDetalhes.BackColor = Color.White;
-        txtDetalhes.BorderStyle = BorderStyle.None;
-        txtDetalhes.Font = new Font("Segoe UI", 10.5F);
+        txtDetalhes.BackColor = Color.FromArgb(248, 250, 252);
+        txtDetalhes.ForeColor = Color.FromArgb(15, 23, 42);
+        txtDetalhes.BorderStyle = BorderStyle.FixedSingle;
+        txtDetalhes.Font = new Font("Consolas", 10.5F);
+        txtDetalhes.Margin = new Padding(0, 8, 0, 0);
 
-        split.Panel1.Controls.Add(picture);
-        split.Panel2.Controls.Add(txtDetalhes);
+        painel.Controls.Add(lblTituloDetalhe, 0, 0);
+        painel.SetColumnSpan(lblTituloDetalhe, 2);
+        painel.Controls.Add(picture, 0, 1);
+        painel.Controls.Add(txtDetalhes, 1, 1);
 
-        return split;
+        return painel;
     }
 
     private Button CriarBotao(string texto, Color fundo, Color corTexto)
@@ -394,14 +528,14 @@ public partial class Form1 : Form
         try
         {
             if (btnAtualizar != null) btnAtualizar.Enabled = false;
-            lblStatus.Text = "Carregando...";
+            if (lblStatus != null) lblStatus.Text = "Carregando ocorrências...";
 
             var request = new HttpRequestMessage(
                 HttpMethod.Get,
                 ApiBase + "/admin/ocorrencias?status=" + Uri.EscapeDataString(FiltroAtual())
             );
 
-            request.Headers.Add("X-Admin-Key", txtAdminKey.Text.Trim());
+            request.Headers.Add("X-Admin-Key", adminKey);
 
             var response = await http.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
@@ -418,12 +552,13 @@ public partial class Form1 : Form
             AtualizarResumo(data != null ? data.Resumo : null);
             RenderizarGrid();
 
-            lblStatus.Text = "Conectado. Última atualização: " + DateTime.Now.ToString("HH:mm:ss");
+            if (lblStatus != null)
+                lblStatus.Text = "Operador: " + adminIdentificacao + " | Última atualização: " + DateTime.Now.ToString("HH:mm:ss");
         }
         catch (Exception ex)
         {
             MessageBox.Show(ex.Message, "Erro ao carregar ocorrências", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            lblStatus.Text = "Erro de conexão.";
+            if (lblStatus != null) lblStatus.Text = "Erro de conexão.";
         }
         finally
         {
@@ -465,7 +600,7 @@ public partial class Form1 : Form
                 item.Titulo,
                 item.Bairro,
                 item.Categoria,
-                item.Prioridade,
+                PrioridadeTexto(item.Prioridade),
                 StatusTexto(item.Status)
             );
         }
@@ -497,21 +632,24 @@ public partial class Form1 : Form
 
         if (item == null)
         {
+            lblTituloDetalhe.Text = "Detalhes da ocorrência selecionada";
             txtDetalhes.Text = "Nenhuma ocorrência selecionada.";
             picture.Image = null;
             return;
         }
 
+        lblTituloDetalhe.Text = item.Titulo ?? "Ocorrência selecionada";
+
         txtDetalhes.Text =
-            "TÍTULO:\r\n" + (item.Titulo ?? "") + "\r\n\r\n" +
-            "DESCRIÇÃO:\r\n" + (item.Descricao ?? "") + "\r\n\r\n" +
+            "ID: " + (item.Id ?? "") + "\r\n" +
+            "STATUS: " + StatusTexto(item.Status) + "\r\n" +
+            "PRIORIDADE: " + PrioridadeTexto(item.Prioridade) + "\r\n" +
             "CATEGORIA: " + (item.Categoria ?? "Não informado") + "\r\n" +
             "BAIRRO: " + (item.Bairro ?? "Não informado") + "\r\n" +
-            "ENDEREÇO: " + (item.Endereco ?? "Não informado") + "\r\n" +
-            "PRIORIDADE: " + (item.Prioridade ?? "Não informado") + "\r\n" +
-            "STATUS: " + StatusTexto(item.Status) + "\r\n\r\n" +
-            "AÇÃO ESPERADA:\r\n" +
-            "Aprovar somente se o texto e a imagem forem adequados e a ocorrência fizer sentido para o bairro.";
+            "ENDEREÇO: " + (item.Endereco ?? "Não informado") + "\r\n\r\n" +
+            "DESCRIÇÃO:\r\n" + (item.Descricao ?? "") + "\r\n\r\n" +
+            "ORIENTAÇÃO DE MODERAÇÃO:\r\n" +
+            "Aprove somente se a ocorrência tiver relação com o bairro, descrição compreensível e imagem adequada. Caso contrário, use Recusar e informe o motivo.";
 
         picture.Image = TentarCarregarImagem(item.Foto ?? item.Imagem);
     }
@@ -535,6 +673,16 @@ public partial class Form1 : Form
 
                 using (var ms = new MemoryStream(bytes))
                 using (var img = Image.FromStream(ms))
+                {
+                    return new Bitmap(img);
+                }
+            }
+
+            if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                using (var stream = http.GetStreamAsync(value).GetAwaiter().GetResult())
+                using (var img = Image.FromStream(stream))
                 {
                     return new Bitmap(img);
                 }
@@ -602,7 +750,7 @@ public partial class Form1 : Form
                 ApiBase + "/admin/ocorrencias/" + Uri.EscapeDataString(id) + "/" + acao
             );
 
-            request.Headers.Add("X-Admin-Key", txtAdminKey.Text.Trim());
+            request.Headers.Add("X-Admin-Key", adminKey);
 
             string payload = motivo == null
                 ? "{}"
@@ -639,36 +787,45 @@ public partial class Form1 : Form
         using (var cancel = new Button())
         {
             form.Text = "Motivo da recusa";
-            form.Size = new Size(540, 280);
+            form.Size = new Size(620, 320);
             form.StartPosition = FormStartPosition.CenterParent;
             form.FormBorderStyle = FormBorderStyle.FixedDialog;
             form.MaximizeBox = false;
             form.MinimizeBox = false;
+            form.BackColor = Color.FromArgb(241, 245, 249);
 
             var label = new Label();
             label.Text = "Informe o motivo da recusa:";
             label.Dock = DockStyle.Top;
-            label.Height = 38;
-            label.Padding = new Padding(14, 12, 14, 0);
+            label.Height = 42;
+            label.Padding = new Padding(16, 14, 16, 0);
+            label.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
 
             box.Multiline = true;
             box.Dock = DockStyle.Top;
-            box.Height = 130;
+            box.Height = 160;
+            box.Font = new Font("Segoe UI", 10.5F);
             box.Text = "Conteúdo inválido, ofensivo, sem relação com o bairro ou com imagem inadequada.";
 
             var footer = new FlowLayoutPanel();
             footer.Dock = DockStyle.Bottom;
-            footer.Height = 55;
+            footer.Height = 62;
             footer.FlowDirection = FlowDirection.RightToLeft;
-            footer.Padding = new Padding(10);
+            footer.Padding = new Padding(12);
 
             ok.Text = "Recusar";
             ok.DialogResult = DialogResult.OK;
-            ok.Width = 110;
+            ok.Width = 120;
+            ok.Height = 36;
+            ok.BackColor = Color.FromArgb(153, 27, 27);
+            ok.ForeColor = Color.White;
+            ok.FlatStyle = FlatStyle.Flat;
+            ok.FlatAppearance.BorderSize = 0;
 
             cancel.Text = "Cancelar";
             cancel.DialogResult = DialogResult.Cancel;
-            cancel.Width = 110;
+            cancel.Width = 120;
+            cancel.Height = 36;
 
             footer.Controls.Add(ok);
             footer.Controls.Add(cancel);
@@ -689,6 +846,14 @@ public partial class Form1 : Form
         if (status == "aberta") return "Publicada";
         if (status == "recusada") return "Recusada";
         return "Pendente";
+    }
+
+    private string PrioridadeTexto(string prioridade)
+    {
+        if (prioridade == "baixa") return "Baixa";
+        if (prioridade == "alta") return "Alta";
+        if (prioridade == "urgente") return "Urgente";
+        return "Média";
     }
 
     protected override void OnFormClosed(FormClosedEventArgs e)
